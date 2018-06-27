@@ -4,6 +4,20 @@ end_of_file = '#'
 def encode(read_stream, write_stream):
     content = read_stream.read()
     dictionary = generate_alphabet()
+
+    encoded_content = encode_content(content, dictionary)
+    # print('encoded content', encoded_content)
+    num_of_bytes = count_num_of_bytes(encoded_content)
+    # print('num of bytes:', num_of_bytes)
+
+    write_stream.write(int(encoded_content, base=2).to_bytes(num_of_bytes, 'little'))
+
+    read_stream.close()
+    write_stream.close()
+
+
+def encode_content(content, dictionary):
+    result = list()
     dictionary_length = len(dictionary.keys())
 
     code_length = len(to_binary(dictionary_length))
@@ -11,16 +25,16 @@ def encode(read_stream, write_stream):
     for ch in content:
         # print('ch', ch)
         if ch == end_of_file:
-            write_stream.write(extend_to_length(dictionary[phrase], code_length))
+            result.append(extend_to_length(dictionary[phrase], code_length))
             # print('out', phrase, '->', extend_to_length(dictionary[phrase], code_length))
-            write_stream.write(extend_to_length(dictionary[end_of_file], code_length))
+            result.append(extend_to_length(dictionary[end_of_file], code_length))
             # print('out', end_of_file, '->', extend_to_length(dictionary[end_of_file], code_length))
         else:
             phrase += ch
             if not (phrase in dictionary.keys()):
                 # print('out', phrase[:-1], '->', extend_to_length(dictionary[phrase[:-1]], code_length))
 
-                write_stream.write(extend_to_length(dictionary[phrase[:-1]], code_length))
+                result.append(extend_to_length(dictionary[phrase[:-1]], code_length))
 
                 dictionary_length_binary = to_binary(dictionary_length)
                 if list(dictionary_length_binary).count('1') == 1:
@@ -31,8 +45,11 @@ def encode(read_stream, write_stream):
                 phrase = phrase[-1:]
                 dictionary_length += 1
 
-    read_stream.close()
-    write_stream.close()
+    return ''.join(result)
+
+
+def count_num_of_bytes(binary_content):
+    return len(binary_content) // 4 + 1
 
 
 def extend_to_length(str_number, length):

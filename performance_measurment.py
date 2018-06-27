@@ -11,6 +11,6 @@ def measure_lzw_performance(read_stream, write_stream):
 
 if __name__ == '__main__':
     file = open('files\\wap.txt', 'r', encoding='utf-8')
-    encoded_file = open('files\\wap_encoded.txt', 'w', encoding='utf-8')
+    encoded_file = open('files\\wap_encoded.txt', 'wb')
 
     measure_lzw_performance(file, encoded_file)
