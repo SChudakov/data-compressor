@@ -1,12 +1,6 @@
-import lzw_compression as lzw
+import lzw
 
 if __name__ == "__main__":
-    file_path = 'test.txt'
-    file_mode = 'r'
-    file = open(file_path, file_mode)
-
-    encoded_file_path = 'encoded.txt'
-    encoded_file_mode = 'w'
-    encoded_file = open(encoded_file_path, encoded_file_mode)
-
+    file = open('files\\wiki.txt', 'r')
+    encoded_file = open('files\\wiki_encoded.txt', 'w')
     lzw.encode(file, encoded_file)

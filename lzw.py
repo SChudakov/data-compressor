@@ -1,9 +1,9 @@
-def encode(read_stream, write_stream):
-    end_of_file = '#'
+end_of_file = '#'
 
+
+def encode(read_stream, write_stream):
     content = read_stream.read()
-    read_stream.close()
-    dictionary = generate_test_alphabet()
+    dictionary = generate_alphabet()
     dictionary_length = len(dictionary.keys())
 
     code_length = len(to_binary(dictionary_length))
@@ -11,8 +11,10 @@ def encode(read_stream, write_stream):
     for ch in content:
         # print('ch', ch)
         if ch == end_of_file:
-            write_stream.write(extend_to_length(dictionary[phrase[:-1]], code_length))
+            write_stream.write(extend_to_length(dictionary[phrase], code_length))
+            # print('out', phrase, '->', extend_to_length(dictionary[phrase], code_length))
             write_stream.write(extend_to_length(dictionary[end_of_file], code_length))
+            # print('out', end_of_file, '->', extend_to_length(dictionary[end_of_file], code_length))
         else:
             phrase += ch
             if not (phrase in dictionary.keys()):
@@ -28,6 +30,8 @@ def encode(read_stream, write_stream):
                 # print(phrase, ':', dictionary_length_binary)
                 phrase = phrase[-1:]
                 dictionary_length += 1
+
+    read_stream.close()
     write_stream.close()
 
 
@@ -46,7 +50,7 @@ def to_binary(number):
 
 
 def generate_alphabet():
-    return {chr(i): to_binary(i) for i in range(256)}
+    return {chr(i): to_binary(i) for i in range(10000)}
 
 
 def generate_test_alphabet():
