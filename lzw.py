@@ -2,28 +2,28 @@ end_of_file = '#'
 
 
 def encode(read_stream, write_stream):
-    content = read_stream.read()
-    dictionary = generate_alphabet()
+    data = read_stream.read()
+    dictionary = generate_wap_alphabet()
 
-    encoded_content = encode_content(content, dictionary)
-    # print('encoded content', encoded_content)
-    num_of_bytes = count_num_of_bytes(encoded_content)
+    encoded_data = encode_data(data, dictionary)
+    # print('encoded data', encoded_data)
+    num_of_bytes = count_num_of_bytes(encoded_data)
     # print('num of bytes:', num_of_bytes)
 
-    write_stream.write(int(encoded_content, base=2).to_bytes(num_of_bytes, 'little'))
+    write_stream.write(int(encoded_data, base=2).to_bytes(num_of_bytes, 'little'))
 
     read_stream.close()
     write_stream.close()
 
 
-def encode_content(content, dictionary):
+def encode_data(data, dictionary):
     result = list()
     dictionary_length = len(dictionary.keys())
 
     code_length = len(to_binary(dictionary_length))
     phrase = ''
-    for ch in content:
-        # print('ch', ch)
+    for ch in data:
+        # print('ch:', ord(ch), ch)
         if ch == end_of_file:
             result.append(extend_to_length(dictionary[phrase], code_length))
             # print('out', phrase, '->', extend_to_length(dictionary[phrase], code_length))
@@ -33,7 +33,7 @@ def encode_content(content, dictionary):
             phrase += ch
             if not (phrase in dictionary.keys()):
                 # print('out', phrase[:-1], '->', extend_to_length(dictionary[phrase[:-1]], code_length))
-
+                # print('phrase:', phrase)
                 result.append(extend_to_length(dictionary[phrase[:-1]], code_length))
 
                 dictionary_length_binary = to_binary(dictionary_length)
@@ -48,8 +48,12 @@ def encode_content(content, dictionary):
     return ''.join(result)
 
 
-def count_num_of_bytes(binary_content):
-    return len(binary_content) // 4 + 1
+def count_num_of_bytes(binary_data):
+    length = len(binary_data)
+    if len(binary_data) % 8 == 0:
+        return length // 8
+    else:
+        return len(binary_data) // 8 + 1
 
 
 def extend_to_length(str_number, length):
@@ -67,7 +71,50 @@ def to_binary(number):
 
 
 def generate_alphabet():
-    return {chr(i): to_binary(i) for i in range(10000)}
+    chars_spans = [
+        (32, 128),  # simple characters
+        (192, 256),  # other latin characters
+        (1040, 1106),  # russian characters
+        (8211, 8213),  # dash and long dash
+        (8220, 8221),  # usual quotes
+        (8222, 8223),  # usual quotes
+        (8230, 8231),  # 3 points
+        (8470, 8471)  # №
+    ]
+
+    result = dict()
+    p = 0
+    for i, j in chars_spans:
+        for k in range(i, j):
+            result[chr(k)] = to_binary(p)
+            p += 1
+    return result
+
+
+def generate_wap_alphabet():
+    chars_spans = [
+        (10, 11),  # strange new line
+        (32, 128),  # simple characters
+        (160, 161),  # strange space
+        (171, 172),  # russian quotes
+        (176, 177),  # degree symbol
+        (187, 188),  # russian quotes
+        (192, 256),  # other latin characters
+        (1040, 1106),  # russian characters
+        (8211, 8213),  # dash and long dash
+        (8220, 8221),  # usual quotes
+        (8222, 8223),  # usual quotes
+        (8230, 8231),  # 3 points
+        (8470, 8471)  # №
+    ]
+
+    result = dict()
+    p = 0
+    for i, j in chars_spans:
+        for k in range(i, j):
+            result[chr(k)] = to_binary(p)
+            p += 1
+    return result
 
 
 def generate_test_alphabet():
