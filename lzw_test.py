@@ -6,7 +6,7 @@ import lzw
 
 class LZWTest(unittest.TestCase):
     def test_wiki_example(self):
-        decoded_data = 'TOBEORNOTTOBEORTOBEORNOT#'
+        decoded_data = 'TOBEORNOTTOBEORTOBEORNOT'
         raw_bits = '10100 01111 00010 00101 01111 10010 ' \
                    '001110 001111 010100 011011 011101 011111 100100 011110 100000 100010 000000'
         expected_encoded_data = b'\x80\x08z\xe4\xd7m\xd4\xe3\xc8W\xc4\xa3'
