@@ -4,17 +4,18 @@ end_of_file = chr(int('0x00', base=16))
 
 
 def encode(read_stream, write_stream):
-    data = read_stream.read()
-    dictionary = generate_dictionary()
+    try:
+        data = read_stream.read()
+        dictionary = generate_dictionary()
 
-    encoded_data = encode_data(data, dictionary)
-    # print('encoded data', encoded_data)
+        encoded_data = encode_data(data, dictionary)
+        # print('encoded data', encoded_data)
 
-    byte_array = utilities.to_byte_array(encoded_data)
-    write_stream.write(byte_array)
-
-    read_stream.close()
-    write_stream.close()
+        byte_array = utilities.to_byte_array(encoded_data)
+        write_stream.write(byte_array)
+    finally:
+        read_stream.close()
+        write_stream.close()
 
 
 def encode_data(data, dictionary):
@@ -110,7 +111,6 @@ def decode_data(bits, dictionary, reversed_dictionary):
             break
 
     return ''.join(result)
-
 
 
 def remove_leading_zeros(str_number):

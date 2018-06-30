@@ -6,18 +6,7 @@ import gamma_code
 
 class GammaCodeTest(unittest.TestCase):
 
-    def test_simple_encode_data(self):
-        data = "ABBCCCDDDD"
-        codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
-        expected_encoded_data = '001000110110100100101111'
-        # encoded_data_codes = '00100 011 011 010 010 010 1 1 1 1'
-        # encoded_data_bytes = '00100011 01101001 00101111'
-
-        encoded_data = gamma_code.encode_data(data, codes)
-
-        self.assertEqual(expected_encoded_data, encoded_data)
-
-    def test_encode_simple(self):
+    def test_simple_encode_file_content(self):
         data = "ABBCCCDDDD"
         expected_encoded_data = b'\x23\x69\x2F'
 
@@ -39,3 +28,30 @@ class GammaCodeTest(unittest.TestCase):
         finally:
             os.remove('test_files\\simple_gamma.txt')
             os.remove('test_files\\simple_gamma_encoded.txt')
+
+    def test_simple_encode_data(self):
+        data = "ABBCCCDDDD"
+        codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
+        expected_encoded_data = '001000110110100100101111'
+        # encoded_data_codes = '00100 011 011 010 010 010 1 1 1 1'
+        # encoded_data_bytes = '00100011 01101001 00101111'
+
+        encoded_data = gamma_code.encode_data(data, codes)
+
+        self.assertEqual(expected_encoded_data, encoded_data)
+
+    def test_wiki_encode_data(self):
+        data = 'TOBEORNOTTOBEORTOBEORNOT'
+        codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
+        expected_encoded_data = '010101100100100101001101010010101100100100101010101100100100101001101010'
+        # encoded_data_codes = '010 1 011 00100 1 00101 00110 1 010
+        #                       010 1 011 00100 1 00101 010 1 011 00100 1 00101 00110 0 010'
+        # encoded_data_bytes = '01000110 01000001 01001100 01001000 11001000 00101010 00110010 00001010 01100010'
+
+        encoded_data = gamma_code.encode_data(data, codes)
+
+        self.assertEqual(expected_encoded_data, encoded_data)
+
+
+if __name__ == '__main__':
+    unittest.main()
