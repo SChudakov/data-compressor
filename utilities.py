@@ -1,18 +1,18 @@
 import collections
 
 
-def generate_codes(frequencies, code_function):
+def generate_codes(characters_by_frequency, code_function):
     result = dict()
-    reversed_frequencies = reverse_dictionary(frequencies, bijective=False)
-    reversed_frequencies_keys_sorted = sorted(reversed_frequencies.keys(), reverse=True)
 
-    i = 1
-    for frequency_key in reversed_frequencies_keys_sorted:
-        for char in reversed_frequencies[frequency_key]:
-            result[char] = code_function(i)
-            i += 1
+    for i in range(len(characters_by_frequency)):
+        result[characters_by_frequency[i]] = code_function(i + 1)
 
     return result
+
+
+def to_characters_by_frequencies(frequencies):
+    sorter_items = sorted(frequencies.items(), key=lambda item: item[1], reverse=True)
+    return ''.join([char for char, _ in sorter_items])
 
 
 def characters_frequencies(data):
@@ -21,11 +21,12 @@ def characters_frequencies(data):
 
 def reverse_dictionary(dictionary, bijective=True):
     result = dict()
-    for key, value in dictionary.items():
-        if bijective:
-            result[key] = value
-        else:
-            if not (value) in result.keys():
+    if bijective:
+        for key, value in dictionary.items():
+            result[value] = key
+    else:
+        for key, value in dictionary.items():
+            if not (value in result.keys()):
                 result[value] = []
             result[value].append(key)
 
@@ -69,3 +70,7 @@ def to_bits(binary_data):
 
 def to_binary(number):
     return bin(number)[2:]
+
+
+def get_characters_by_frequency_delimiter():
+    return b'|'

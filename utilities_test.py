@@ -61,22 +61,18 @@ class UtilitiesTest(unittest.TestCase):
 
         self.assertEqual(expected_frequencies, frequencies)
 
-    def test_codes(self):
-        character_frequencies = {'D': 4, 'C': 3, 'B': 2, 'A': 1}
+    def test_generate_codes(self):
+        characters_by_frequency = 'DCBA'
         expected_codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
 
-        codes = utilities.generate_codes(character_frequencies, gamma_code.gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, gamma_code.gamma_code)
 
         self.assertEqual(expected_codes, codes)
 
-    def test_wiki_chars_codes(self):
-        character_frequencies = {'O': 8, 'T': 5, 'B': 4, 'E': 3, 'R': 2, 'N': 1}
+    def test_wiki_chars_generate_codes(self):
+        characters_by_frequency = 'OTBERN'
         expected_codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
 
-        codes = utilities.generate_codes(character_frequencies, gamma_code.gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, gamma_code.gamma_code)
 
         self.assertEqual(expected_codes, codes)
-
-
-if __name__ == '__main__':
-    unittest.main()

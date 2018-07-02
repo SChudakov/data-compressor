@@ -22,7 +22,7 @@ class LZWTest(unittest.TestCase):
         wiki_reversed_dictionary = self.generate_wiki_reversed_dictionary()
 
         decoded_data = lzw.decode_data(bits, wiki_dictionary, wiki_reversed_dictionary)
-        print('decoded data', decoded_data)
+        # print('decoded data', decoded_data)
 
         self.assertEqual(expected_decoded_data, decoded_data)
 
@@ -104,7 +104,3 @@ class LZWTest(unittest.TestCase):
                 result[chr(k)] = bin(p)[2:]
                 p += 1
         return result
-
-
-if __name__ == '__main__':
-    unittest.main()

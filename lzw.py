@@ -3,8 +3,13 @@ import utilities
 end_of_file = chr(int('0x00', base=16))
 
 
-def encode(read_stream, write_stream):
+def encode(read_stream_path, write_stream_path):
+    read_stream = None
+    write_stream = None
     try:
+        read_stream = open(read_stream_path, 'r', encoding='utf-8')
+        write_stream = open(write_stream_path, 'wb')
+
         data = read_stream.read()
         dictionary = generate_dictionary()
 
@@ -14,8 +19,10 @@ def encode(read_stream, write_stream):
         byte_array = utilities.to_byte_array(encoded_data)
         write_stream.write(byte_array)
     finally:
-        read_stream.close()
-        write_stream.close()
+        if not (read_stream is None):
+            read_stream.close()
+        if not (write_stream is None):
+            write_stream.close()
 
 
 def encode_data(data, dictionary):
@@ -50,21 +57,27 @@ def encode_data(data, dictionary):
     return ''.join(result)
 
 
-def decode(read_stream, write_stream):
-    binary_data = read_stream.read()
-    bits = utilities.to_bits(binary_data)
-    # print('binary data:', binary_data)
-    # print('bits:', bits)
+def decode(read_stream_path, write_stream_path):
+    read_stream = None
+    write_stream = None
+    try:
+        read_stream = open(read_stream_path, 'rb')
+        write_stream = open(write_stream_path, 'w', encoding='utf-8')
 
-    dictionary = generate_dictionary()
-    reversed_dictionary = utilities.reverse_dictionary(dictionary)
+        binary_data = read_stream.read()
+        bits = utilities.to_bits(binary_data)
+        # print('binary data:', binary_data)
+        # print('bits:', bits)
 
-    decoded_data = decode_data(bits, dictionary, reversed_dictionary)
-    write_stream.write(decoded_data)
-    # print('decoded data:', decoded_data)
+        dictionary = generate_dictionary()
+        reversed_dictionary = utilities.reverse_dictionary(dictionary)
 
-    read_stream.close()
-    write_stream.close()
+        decoded_data = decode_data(bits, dictionary, reversed_dictionary)
+        write_stream.write(decoded_data)
+        # print('decoded data:', decoded_data)
+    finally:
+        read_stream.close()
+        write_stream.close()
 
 
 def decode_data(bits, dictionary, reversed_dictionary):
