@@ -1,7 +1,7 @@
 import utilities
 
 
-def encode(read_stream_path, write_stream_path):
+def encode(read_stream_path, write_stream_path, code_function):
     read_stream = None
     write_stream = None
     try:
@@ -12,12 +12,12 @@ def encode(read_stream_path, write_stream_path):
 
         characters_frequencies = utilities.characters_frequencies(data)
         characters_by_frequency = utilities.to_characters_by_frequencies(characters_frequencies)
-        codes = utilities.generate_codes(characters_by_frequency, gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, code_function)
         # print('data:', data)
         # print('frequencies', '\n'.join(map(str, characters_frequencies.items())), sep='\n')
         # print('codes', '\n'.join(map(str, codes.items())), sep='\n')
 
-        encoded_data = encode_data(data, codes)
+        encoded_data = _encode_data(data, codes)
         byte_array = utilities.to_byte_array(encoded_data)
         # print('encoded data', encoded_data)
 
@@ -29,7 +29,7 @@ def encode(read_stream_path, write_stream_path):
         write_stream.close()
 
 
-def encode_data(data, codes):
+def _encode_data(data, codes):
     result = list()
     for ch in data:
         # print(ch, ':', codes[ch])
@@ -37,7 +37,7 @@ def encode_data(data, codes):
     return ''.join(result)
 
 
-def decode(read_stream_path, write_stream_path):
+def decode(read_stream_path, write_stream_path, elias):
     read_stream = None
     write_stream = None
 
@@ -49,7 +49,7 @@ def decode(read_stream_path, write_stream_path):
             utilities.get_characters_by_frequency_delimiter())
         characters_by_frequency = characters_by_frequency_binary.decode(encoding='utf-8')
 
-        codes = utilities.generate_codes(characters_by_frequency, gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, elias)
         reversed_codes = utilities.reverse_dictionary(codes)
         bits = utilities.to_bits(binary_data)
         # print('characters_by_frequency:', characters_by_frequency)
@@ -59,7 +59,7 @@ def decode(read_stream_path, write_stream_path):
         # print('reverse_codes:', '\n'.join(map(str, reversed_codes.items())), sep='\n')
         # print('bits:', bits)
 
-        decoded_data = decode_data(bits, reversed_codes)
+        decoded_data = _decode_data(bits, reversed_codes)
 
         write_stream.write(decoded_data)
     finally:
@@ -67,7 +67,7 @@ def decode(read_stream_path, write_stream_path):
         write_stream.close()
 
 
-def decode_data(bits, reversed_codes):
+def _decode_data(bits, reversed_codes):
     result = list()
 
     i = 0
@@ -84,10 +84,3 @@ def decode_data(bits, reversed_codes):
 
         i += code_length
     return ''.join(result)
-
-
-def gamma_code(number):
-    if number <= 0:
-        raise ValueError('number should be >= 1')
-    bits = utilities.to_binary(number)
-    return '0' * (len(bits) - 1) + bits

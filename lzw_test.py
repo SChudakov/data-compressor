@@ -10,7 +10,7 @@ class LZWTest(unittest.TestCase):
         expected_encoded_data = '101000111100010001010111110010001110001111010100' \
                                 '011011011101011111100100011110100000100010000000'
 
-        encoded_data = lzw.encode_data(data, self.generate_wiki_dictionary())
+        encoded_data = lzw._encode_data(data, self.generate_wiki_dictionary())
 
         self.assertEqual(expected_encoded_data, encoded_data)
 
@@ -21,7 +21,7 @@ class LZWTest(unittest.TestCase):
         wiki_dictionary = self.generate_wiki_dictionary()
         wiki_reversed_dictionary = self.generate_wiki_reversed_dictionary()
 
-        decoded_data = lzw.decode_data(bits, wiki_dictionary, wiki_reversed_dictionary)
+        decoded_data = lzw._decode_data(bits, wiki_dictionary, wiki_reversed_dictionary)
         # print('decoded data', decoded_data)
 
         self.assertEqual(expected_decoded_data, decoded_data)
@@ -32,7 +32,7 @@ class LZWTest(unittest.TestCase):
         # lzw_code = '01 10 011 101 000'
         # code_bytes = '01100111 01000'
 
-        encoded_data = lzw.encode_data(data, self.generate_special_case_dictionary())
+        encoded_data = lzw._encode_data(data, self.generate_special_case_dictionary())
 
         self.assertEqual(expected_encoded_data, encoded_data)
 
@@ -42,7 +42,7 @@ class LZWTest(unittest.TestCase):
 
         special_case_dictionary = self.generate_special_case_dictionary()
         special_case_reversed_dictionary = self.generate_special_case_reversed_dictionary()
-        decoded_data = lzw.decode_data(bits, special_case_dictionary, special_case_reversed_dictionary)
+        decoded_data = lzw._decode_data(bits, special_case_dictionary, special_case_reversed_dictionary)
 
         self.assertEqual(expected_decoded_data, decoded_data)
 

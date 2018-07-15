@@ -11,9 +11,9 @@ def encode(read_stream_path, write_stream_path):
         write_stream = open(write_stream_path, 'wb')
 
         data = read_stream.read()
-        dictionary = generate_dictionary()
+        dictionary = _generate_dictionary()
 
-        encoded_data = encode_data(data, dictionary)
+        encoded_data = _encode_data(data, dictionary)
         # print('encoded data', encoded_data)
 
         byte_array = utilities.to_byte_array(encoded_data)
@@ -25,7 +25,7 @@ def encode(read_stream_path, write_stream_path):
             write_stream.close()
 
 
-def encode_data(data, dictionary):
+def _encode_data(data, dictionary):
     result = list()
     dictionary_length = len(dictionary.keys())
 
@@ -69,10 +69,10 @@ def decode(read_stream_path, write_stream_path):
         # print('binary data:', binary_data)
         # print('bits:', bits)
 
-        dictionary = generate_dictionary()
+        dictionary = _generate_dictionary()
         reversed_dictionary = utilities.reverse_dictionary(dictionary)
 
-        decoded_data = decode_data(bits, dictionary, reversed_dictionary)
+        decoded_data = _decode_data(bits, dictionary, reversed_dictionary)
         write_stream.write(decoded_data)
         # print('decoded data:', decoded_data)
     finally:
@@ -80,13 +80,13 @@ def decode(read_stream_path, write_stream_path):
         write_stream.close()
 
 
-def decode_data(bits, dictionary, reversed_dictionary):
+def _decode_data(bits, dictionary, reversed_dictionary):
     result = list()
     dictionary_length = len(dictionary.keys())
     code_length = len(utilities.to_binary(dictionary_length))
 
     chunk = bits[0:code_length]
-    decoded_chunk = reversed_dictionary[remove_leading_zeros(chunk)]
+    decoded_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
     result.append(decoded_chunk)
     phrase = decoded_chunk
     # print(chunk, ':', decoded_chunk)
@@ -96,8 +96,8 @@ def decode_data(bits, dictionary, reversed_dictionary):
     while i + code_length < len(bits):
         chunk = bits[i: i + code_length]
         if '1' in chunk:
-            if remove_leading_zeros(chunk) in reversed_dictionary.keys():
-                decoded_chunk = reversed_dictionary[remove_leading_zeros(chunk)]
+            if _remove_leading_zeros(chunk) in reversed_dictionary.keys():
+                decoded_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
             else:
                 decoded_chunk = phrase + phrase[0]  # special clase
             dict_element = phrase + decoded_chunk[0]
@@ -126,11 +126,11 @@ def decode_data(bits, dictionary, reversed_dictionary):
     return ''.join(result)
 
 
-def remove_leading_zeros(str_number):
+def _remove_leading_zeros(str_number):
     return str_number.lstrip('0')
 
 
-def generate_dictionary():
+def _generate_dictionary():
     chars_spans = [
         (0, 1),  # end of file
         (10, 11),  # strange new line
