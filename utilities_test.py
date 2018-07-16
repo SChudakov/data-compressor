@@ -1,6 +1,6 @@
 import unittest
 
-import elias_functions
+import elias_code_functions
 import utilities
 
 
@@ -65,7 +65,7 @@ class UtilitiesTest(unittest.TestCase):
         characters_by_frequency = 'DCBA'
         expected_codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
 
-        codes = utilities.generate_codes(characters_by_frequency, elias_functions.gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
 
@@ -73,6 +73,6 @@ class UtilitiesTest(unittest.TestCase):
         characters_by_frequency = 'OTBERN'
         expected_codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
 
-        codes = utilities.generate_codes(characters_by_frequency, elias_functions.gamma_code)
+        codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
