@@ -1,3 +1,4 @@
+import elias_code_functions
 import utilities
 
 gamma_code_ending_bit = '0'
@@ -5,7 +6,7 @@ delta_code_ending_bit = '0'
 omega_code_ending_bit = '1'
 
 
-def encode(read_stream_path, write_stream_path, *, code_function, extending_bit):
+def encode(read_stream_path, write_stream_path, *, code_type):
     read_stream = None
     write_stream = None
     try:
@@ -16,13 +17,17 @@ def encode(read_stream_path, write_stream_path, *, code_function, extending_bit)
 
         characters_frequencies = utilities.characters_frequencies(data)
         characters_by_frequency = utilities.to_characters_by_frequencies(characters_frequencies)
+
+        code_function = get_code_function(code_type)
+        ending_bit = get_ending_bit(code_type)
+
         codes = utilities.generate_codes(characters_by_frequency, code_function)
         # print('data:', data)
         # print('frequencies', '\n'.join(map(str, characters_frequencies.items())), sep='\n')
         # print('codes', '\n'.join(map(str, codes.items())), sep='\n')
 
         encoded_data = _encode_data(data, codes)
-        byte_array = utilities.to_byte_array(encoded_data, extending_bit=extending_bit)
+        byte_array = utilities.to_byte_array(encoded_data, ending_bit=ending_bit)
         # print('encoded data', encoded_data)
         # print('byte array', byte_array)
 
@@ -47,8 +52,6 @@ def decode(read_stream_path, write_stream_path, *, code_type):
     write_stream = None
 
     try:
-        code_function = utilities.get_code_function(code_type)
-
         read_stream = open(read_stream_path, 'rb')
         write_stream = open(write_stream_path, 'w', encoding='utf-8')
 
@@ -56,22 +59,21 @@ def decode(read_stream_path, write_stream_path, *, code_type):
             utilities.get_characters_by_frequency_delimiter())
         characters_by_frequency = characters_by_frequency_binary.decode(encoding='utf-8')
 
+        code_function = get_code_function(code_type)
+        ending_bit = get_ending_bit(code_type)
+        read_code_function = get_read_code_function(code_type)
+
         codes = utilities.generate_codes(characters_by_frequency, code_function)
         reversed_codes = utilities.reverse_dictionary(codes)
         bits = utilities.to_bits(binary_data)
-        # print('characters_by_frequency:', characters_by_frequency)
+        # print('characters by frequency:', characters_by_frequency)
         # print('binary data:', binary_data)
 
         # print('codes:', '\n'.join(map(str, codes.items())), sep='\n')
         # print('reverse_codes:', '\n'.join(map(str, reversed_codes.items())), sep='\n')
         # print('bits:', bits)
 
-        if code_type == 'gamma':
-            decoded_data = _decode_data(bits, reversed_codes, read_code_function=_read_gamma_code, ending_bit='0')
-        elif code_type == "delta":
-            decoded_data = _decode_data(bits, reversed_codes, read_code_function=_read_delta_code, ending_bit='0')
-        else:  # code_type == "omega"
-            decoded_data = _decode_data(bits, reversed_codes, read_code_function=_read_omega_code, ending_bit='1')
+        decoded_data = _decode_data(bits, reversed_codes, read_code_function=read_code_function, ending_bit=ending_bit)
 
         write_stream.write(decoded_data)
     finally:
@@ -82,7 +84,7 @@ def decode(read_stream_path, write_stream_path, *, code_type):
 def _decode_data(bits, reversed_codes, *, read_code_function, ending_bit):
     result = list()
 
-    num_of_ending_bits = _count_ending_bits(bits, bit=ending_bit)
+    num_of_ending_bits = _count_ending_bits(bits, ending_bit=ending_bit)
 
     i = 0
     while i < len(bits) - num_of_ending_bits:
@@ -155,10 +157,43 @@ def _read_omega_group(bits, position, group_length):
     return result
 
 
-def _count_ending_bits(bits, *, bit):
+def _count_ending_bits(bits, *, ending_bit):
     result = 0
     i = len(bits) - 1
-    while bits[i] == bit:
+    while bits[i] == ending_bit:
         result += 1
         i -= 1
     return result
+
+
+def get_code_function(code_type):
+    if code_type == 'gamma':
+        return elias_code_functions.gamma_code
+    elif code_type == "delta":
+        return elias_code_functions.delta_code
+    elif code_type == "omega":
+        return elias_code_functions.omega_code
+    else:
+        raise ValueError('invalid elias code type, valid types are gamma, delta and omage')
+
+
+def get_ending_bit(code_type):
+    if code_type == 'gamma':
+        return gamma_code_ending_bit
+    elif code_type == "delta":
+        return delta_code_ending_bit
+    elif code_type == "omega":
+        return omega_code_ending_bit
+    else:
+        raise ValueError('invalid elias code type, valid types are gamma, delta and omage')
+
+
+def get_read_code_function(code_type):
+    if code_type == 'gamma':
+        return _read_gamma_code
+    elif code_type == "delta":
+        return _read_delta_code
+    elif code_type == "omega":
+        return _read_omega_code
+    else:
+        raise ValueError('invalid elias code type, valid types are gamma, delta and omage')

@@ -31,8 +31,7 @@ class EliasTest(unittest.TestCase):
         write_file_path = "test_files\\simple_gamma_encoded.txt"
 
         try:
-            elias.encode(read_stream_path, write_file_path, code_function=EliasTest.gamma_code_function,
-                         extending_bit=elias.gamma_code_ending_bit)
+            elias.encode(read_stream_path, write_file_path, code_type='gamma')
 
             check_stream = open('test_files\\simple_gamma_encoded.txt', 'rb')
             encoded_data = check_stream.read()
@@ -62,8 +61,7 @@ class EliasTest(unittest.TestCase):
         write_file_path = "test_files\\simple_delta_encoded.txt"
 
         try:
-            elias.encode(read_stream_path, write_file_path, code_function=EliasTest.delta_code_function,
-                         extending_bit=elias.delta_code_ending_bit)
+            elias.encode(read_stream_path, write_file_path, code_type='delta')
 
             check_stream = open('test_files\\simple_delta_encoded.txt', 'rb')
             encoded_data = check_stream.read()
@@ -94,8 +92,7 @@ class EliasTest(unittest.TestCase):
         write_file_path = "test_files\\simple_omega_encoded.txt"
 
         try:
-            elias.encode(read_stream_path, write_file_path, code_function=EliasTest.omega_code_function,
-                         extending_bit=elias.omega_code_ending_bit)
+            elias.encode(read_stream_path, write_file_path, code_type='omega')
 
             check_stream = open('test_files\\simple_omega_encoded.txt', 'rb')
             encoded_data = check_stream.read()

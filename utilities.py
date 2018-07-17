@@ -1,7 +1,5 @@
 import collections
 
-import elias_code_functions
-
 
 def generate_codes(characters_by_frequency, code_function):
     result = dict()
@@ -45,9 +43,9 @@ def extend_to_length(bit_string, length, *, extending_bit='0'):
     return ''.join(result)
 
 
-def to_byte_array(bit_string, *, extending_bit):
+def to_byte_array(bit_string, *, ending_bit):
     num_of_bytes = count_num_of_bytes(bit_string)
-    extended_string = extend_to_num_of_bytes(bit_string, num_of_bytes, extending_bit=extending_bit)
+    extended_string = extend_to_num_of_bytes(bit_string, num_of_bytes, extending_bit=ending_bit)
     # print('extended string:', extended_string)
     return int(extended_string, base=2).to_bytes(num_of_bytes, 'little')[::-1]
 
@@ -77,14 +75,3 @@ def to_binary(number):
 
 def get_characters_by_frequency_delimiter():
     return b'|'
-
-
-def get_code_function(code_type):
-    if code_type == 'gamma':
-        return elias_code_functions.gamma_code
-    elif code_type == "delta":
-        return elias_code_functions.delta_code
-    elif code_type == "omega":
-        return elias_code_functions.omega_code
-    else:
-        raise ValueError('invalid elias code type, valid types are gamma, delta and omage')
