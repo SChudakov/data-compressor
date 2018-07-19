@@ -27,7 +27,9 @@ class EliasTest(unittest.TestCase):
     @mock.patch('elias._get_code_function')
     @mock.patch('elias._get_ending_bit')
     @mock.patch('elias._sequential_encode')
-    def test_encode_sequential(self, mocked_get_code_function, mocked_get_ending_bit, mocked_sequential_encode):
+    def test_encode_sequential(self, mocked_sequential_encode, mocked_get_ending_bit, mocked_get_code_function):
+        mocked_get_code_function.return_value = elias_code_functions.gamma_code
+        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
 
         read_stream_path = 'read stream path'
         write_stream_path = 'write stream path'
@@ -39,14 +41,6 @@ class EliasTest(unittest.TestCase):
         expected_write_stream_path_parameter_value = write_stream_path
         expected_code_function_parameter_value = elias_code_functions.gamma_code
         expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
-
-        mocked_get_code_function.return_value = elias_code_functions.gamma_code
-
-        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
-
-        elias._get_code_function = mocked_get_code_function
-        elias._get_ending_bit = mocked_get_ending_bit
-        elias._sequential_encode = mocked_sequential_encode
 
         elias.encode(read_stream_path, write_stream_path, code_type=code_type, hyper_threaded=hyper_threaded)
 
@@ -63,9 +57,11 @@ class EliasTest(unittest.TestCase):
     @mock.patch('elias._get_ending_bit')
     @mock.patch('elias._hyper_threaded_encode')
     def test_encode_not_hyper_threaded(self,
-                                       mocked_get_code_function,
+                                       mocked_hyper_threaded_encode,
                                        mocked_get_ending_bit,
-                                       mocked_hyper_threaded_encode):
+                                       mocked_get_code_function):
+        mocked_get_code_function.return_value = elias_code_functions.gamma_code
+        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
 
         read_stream_path = 'read stream path'
         write_stream_path = 'write stream path'
@@ -77,14 +73,6 @@ class EliasTest(unittest.TestCase):
         expected_write_stream_path_parameter_value = write_stream_path
         expected_code_function_parameter_value = elias_code_functions.gamma_code
         expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
-
-        elias._get_code_function = mocked_get_code_function
-        mocked_get_code_function.return_value = elias_code_functions.gamma_code
-
-        elias._get_ending_bit = mocked_get_ending_bit
-        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
-
-        elias._hyper_threaded_encode = mocked_hyper_threaded_encode
 
         elias.encode(read_stream_path, write_stream_path, code_type=code_type, hyper_threaded=hyper_threaded)
 
@@ -168,12 +156,12 @@ class EliasTest(unittest.TestCase):
     # ---------------- test _encode_file_content --------------
 
     @mock.patch('utilities.threading_configuration')
-    @mock.patch('elias._combine_threading_results')
     @mock.patch('utilities.get_thread_result_file_name')
+    @mock.patch('elias._combine_threading_results')
     def test_hyper_threaded_encode_simple_1_thread_results_file_content(self,
-                                                                        mocked_threading_configuration,
                                                                         mocked_combine_threading_results,
-                                                                        mocked_get_thread_result_file_name):
+                                                                        mocked_get_thread_result_file_name,
+                                                                        mocked_threading_configuration):
         data = "ABBCCCDDDD"
 
         expected_thread_1_encoded_data = b'BA' + self.test_delimiter + b'\x58'
@@ -209,10 +197,6 @@ class EliasTest(unittest.TestCase):
         mocked_get_thread_result_file_name.side_effect = [thread_1_result_file,
                                                           thread_2_result_file,
                                                           thread_3_result_file]
-
-        utilities.threading_configuration = mocked_threading_configuration
-        elias._combine_threading_results = mocked_combine_threading_results
-        utilities.get_thread_result_file_name = mocked_get_thread_result_file_name
 
         read_stream_path = 'test_files\\hyper_threaded_gamma_simple.txt'
         write_stream_path = "test_files\\hyper_threaded_gamma_simple_encoded.txt"
@@ -265,13 +249,14 @@ class EliasTest(unittest.TestCase):
             os.remove(thread_2_result_file)
             os.remove(thread_3_result_file)
 
+
     @mock.patch('utilities.threading_configuration')
-    @mock.patch('elias._combine_threading_results')
     @mock.patch('utilities.get_thread_result_file_name')
+    @mock.patch('elias._combine_threading_results')
     def test_hyper_threaded_encode_TBER_3_thread_results_file_content(self,
-                                                                      mocked_threading_configuration,
                                                                       mocked_combine_threading_results,
-                                                                      mocked_get_thread_result_file_name):
+                                                                      mocked_get_thread_result_file_name,
+                                                                      mocked_threading_configuration):
         data = "RRRREEEBBTTRREBRBEERERBBTRERER"
 
         expected_thread_1_encoded_data = b'REBT' + self.test_delimiter + b'\xF4\x93\x64'
@@ -315,10 +300,6 @@ class EliasTest(unittest.TestCase):
         mocked_get_thread_result_file_name.side_effect = [thread_1_result_file,
                                                           thread_2_result_file,
                                                           thread_3_result_file]
-
-        utilities.threading_configuration = mocked_threading_configuration
-        elias._combine_threading_results = mocked_combine_threading_results
-        utilities.get_thread_result_file_name = mocked_get_thread_result_file_name
 
         read_stream_path = 'test_files\\hyper_threaded_gamma_TBER.txt'
         write_stream_path = "test_files\\hyper_threaded_gamma_TBER_encoded.txt"
@@ -372,14 +353,14 @@ class EliasTest(unittest.TestCase):
             os.remove(thread_3_result_file)
 
     @mock.patch('utilities.threading_configuration')
-    @mock.patch('elias._combine_threading_results')
     @mock.patch('utilities.get_thread_result_file_name')
+    @mock.patch('elias._combine_threading_results')
     @mock.patch('utilities.generate_codes')
     def test_hyper_threaded_encode_wiki_1_thread_results_file_content(self,
-                                                                      mocked_threading_configuration,
+                                                                      mocked_generate_codes,
                                                                       mocked_combine_threading_results,
                                                                       mocked_get_thread_result_file_name,
-                                                                      mocked_generate_codes):
+                                                                      mocked_threading_configuration):
         data = "TOBEORNOTTOBEORTOBEORNOT"
 
         expected_thread_1_encoded_data = b'OTBERN' + self.test_delimiter + b'\x56\x49\x4D\x4A\xC9\x2A\xB2\x4A\x6A'
