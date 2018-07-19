@@ -75,11 +75,16 @@ def to_binary(number):
 
 
 def get_characters_by_frequency_delimiter():
-    return b'|'
+    return b'\x00'
+
+
+def get_thread_chunk_delimiter():
+    return b'\x01'
 
 
 def threading_configuration(file_path):
     pass
+
 
 def file_length_in_bytes(file_path):
     return os.stat(file_path).st_size

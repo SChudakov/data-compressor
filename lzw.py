@@ -1,14 +1,14 @@
+import file_access_modes
 import utilities
 
 end_of_file = chr(int('0x00', base=16))
-
 
 def encode(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
-        read_stream = open(read_stream_path, 'r', encoding='utf-8')
-        write_stream = open(write_stream_path, 'wb')
+        read_stream = open(read_stream_path, **file_access_modes.encode_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.encode_write_configuration)
 
         data = read_stream.read()
         dictionary = _generate_dictionary()
@@ -61,8 +61,8 @@ def decode(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
-        read_stream = open(read_stream_path, 'rb')
-        write_stream = open(write_stream_path, 'w', encoding='utf-8')
+        read_stream = open(read_stream_path, **file_access_modes.decode_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.decode_write_configuration)
 
         binary_data = read_stream.read()
         bits = utilities.to_bits(binary_data)
@@ -76,8 +76,10 @@ def decode(read_stream_path, write_stream_path):
         write_stream.write(decoded_data)
         # print('decoded data:', decoded_data)
     finally:
-        read_stream.close()
-        write_stream.close()
+        if not (read_stream is None):
+            read_stream.close()
+        if not (write_stream is None):
+            write_stream.close()
 
 
 def _decode_data(bits, dictionary, reversed_dictionary):

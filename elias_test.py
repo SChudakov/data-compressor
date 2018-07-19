@@ -15,6 +15,13 @@ class EliasTest(unittest.TestCase):
     delta_code_function = elias_code_functions.delta_code
     omega_code_function = elias_code_functions.omega_code
 
+    test_delimiter = b'|'
+
+    def setUp(self):
+        mocked_get_characters_by_frequency_delimiter = mock.Mock('utilities.get_characters_by_frequency_delimiter')
+        mocked_get_characters_by_frequency_delimiter.return_value = self.test_delimiter
+        utilities.get_characters_by_frequency_delimiter = mocked_get_characters_by_frequency_delimiter
+
     # ---------------- test encode --------------
 
     @mock.patch('elias._get_code_function')
@@ -33,12 +40,12 @@ class EliasTest(unittest.TestCase):
         expected_code_function_parameter_value = elias_code_functions.gamma_code
         expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
 
-        elias._get_code_function = mocked_get_code_function
         mocked_get_code_function.return_value = elias_code_functions.gamma_code
 
-        elias._get_ending_bit = mocked_get_ending_bit
         mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
 
+        elias._get_code_function = mocked_get_code_function
+        elias._get_ending_bit = mocked_get_ending_bit
         elias._sequential_encode = mocked_sequential_encode
 
         elias.encode(read_stream_path, write_stream_path, code_type=code_type, hyper_threaded=hyper_threaded)
@@ -169,7 +176,7 @@ class EliasTest(unittest.TestCase):
                                                                         mocked_get_thread_result_file_name):
         data = "ABBCCCDDDD"
 
-        expected_thread_1_encoded_data = b'BA|\x58'
+        expected_thread_1_encoded_data = b'BA' + self.test_delimiter + b'\x58'
         # ABB
         # A : 1 : 2 : 1
         # B : 2 : 1 : 010
@@ -177,14 +184,14 @@ class EliasTest(unittest.TestCase):
         # 01011000
         # 58
 
-        expected_thread_2_encoded_data = b'C|\xE0'
+        expected_thread_2_encoded_data = b'C' + self.test_delimiter + b'\xE0'
         # CCC
         # C : 1 : 1 : 1
         # 1 1 1
         # 11100000
         # E0
 
-        expected_thread_3_encoded_data = b'D|\xF0'
+        expected_thread_3_encoded_data = b'D' + self.test_delimiter + b'\xF0'
         # DDDD
         # C : 1 : 1 : 1
         # 1 1 1 1
@@ -267,7 +274,7 @@ class EliasTest(unittest.TestCase):
                                                                       mocked_get_thread_result_file_name):
         data = "RRRREEEBBTTRREBRBEERERBBTRERER"
 
-        expected_thread_1_encoded_data = b'REBT|\xF4\x93\x64'
+        expected_thread_1_encoded_data = b'REBT' + self.test_delimiter + b'\xF4\x93\x64'
         # RRRREEEBBT
         # T : 1 : 4 : 00100
         # B : 2 : 3 : 011
@@ -277,7 +284,7 @@ class EliasTest(unittest.TestCase):
         # 11110100 10010011 01100100
         # F4       93       64
 
-        expected_thread_2_encoded_data = b'REBT|\x26\x9D\xA5'
+        expected_thread_2_encoded_data = b'REBT' + self.test_delimiter + b'\x26\x9D\xA5'
         # TRREBRBEER
         # T : 1 : 4 : 00100
         # B : 2 : 3 : 011
@@ -287,7 +294,7 @@ class EliasTest(unittest.TestCase):
         # 00100110 10011101 10100101
         # 26       9D       A5
 
-        expected_thread_3_encoded_data = b'REBT|\x56\xC9\x55'
+        expected_thread_3_encoded_data = b'REBT' + self.test_delimiter + b'\x56\xC9\x55'
         # ERBBTRERER
         # T : 1 : 4 : 00100
         # B : 2 : 3 : 011
@@ -375,7 +382,7 @@ class EliasTest(unittest.TestCase):
                                                                       mocked_generate_codes):
         data = "TOBEORNOTTOBEORTOBEORNOT"
 
-        expected_thread_1_encoded_data = b'OTBERN|\x56\x49\x4D\x4A\xC9\x2A\xB2\x4A\x6A'
+        expected_thread_1_encoded_data = b'OTBERN' + self.test_delimiter + b'\x56\x49\x4D\x4A\xC9\x2A\xB2\x4A\x6A'
         # O : 1
         # T : 010
         # B : 011
@@ -436,7 +443,7 @@ class EliasTest(unittest.TestCase):
 
     def test_encode_file_content_gamma_simple(self):
         data = "ABBCCCDDDD"
-        expected_encoded_data = b'DCBA|\x23\x69\x2F'
+        expected_encoded_data = b'DCBA' + self.test_delimiter + b'\x23\x69\x2F'
         # A : 1 : 4 : 00100
         # B : 2 : 3 : 011
         # C : 3 : 2 : 010
@@ -477,7 +484,7 @@ class EliasTest(unittest.TestCase):
 
     def test_encode_file_content_delta_simple(self):
         data = "ABBCCCDDDD"
-        expected_encoded_data = b'DCBA|\x62\xAA\x22\x78'
+        expected_encoded_data = b'DCBA' + self.test_delimiter + b'\x62\xAA\x22\x78'
         # A : 1 : 4 : 01100
         # B : 2 : 3 : 0101
         # C : 3 : 2 : 0100
@@ -517,7 +524,7 @@ class EliasTest(unittest.TestCase):
 
     def test_encode_simple_omega_hype_threaded_file_content(self):
         data = "ABBCCCDDDD"
-        expected_encoded_data = b'DCBA|\xA3\x69\x20\x7F'
+        expected_encoded_data = b'DCBA' + self.test_delimiter + b'\xA3\x69\x20\x7F'
         # A : 1 : 4 : 101000
         # B : 2 : 3 : 110
         # C : 3 : 2 : 100
@@ -625,7 +632,7 @@ class EliasTest(unittest.TestCase):
     # ------ test simple example decode file content ---
 
     def test_decode_file_content_gamma_simple(self):
-        binary_data = b'DCBA|\x23\x69\x2F'
+        binary_data = b'DCBA' + self.test_delimiter + b'\x23\x69\x2F'
         expected_decoded_data = "ABBCCCDDDD"
 
         initializing_stream = None
@@ -647,16 +654,16 @@ class EliasTest(unittest.TestCase):
 
             self.assertEqual(expected_decoded_data, decoded_data)
         finally:
-            if not(initializing_stream is None) and not initializing_stream.closed:
+            if not (initializing_stream is None) and not initializing_stream.closed:
                 initializing_stream.close()
-            if not(check_stream is None) and not check_stream.closed:
+            if not (check_stream is None) and not check_stream.closed:
                 check_stream.close()
 
             os.remove(read_stream_path)
             os.remove(write_file_path)
 
     def test_decode_file_content_delta_simple(self):
-        binary_data = b'DCBA|\x62\xAA\x22\x78'
+        binary_data = b'DCBA' + self.test_delimiter + b'\x62\xAA\x22\x78'
         expected_decoded_data = "ABBCCCDDDD"
 
         read_stream_path = 'test_files\\simple_encoded_delta.txt'
@@ -687,7 +694,7 @@ class EliasTest(unittest.TestCase):
             os.remove(write_stream_path)
 
     def test_decode_file_content_omega_simple(self):
-        binary_data = b'DCBA|\xA3\x69\x20\x7F'
+        binary_data = b'DCBA' + self.test_delimiter + b'\xA3\x69\x20\x7F'
         expected_decoded_data = "ABBCCCDDDD"
 
         read_stream_path = 'test_files\\simple_encoded_omega.txt'
@@ -711,7 +718,7 @@ class EliasTest(unittest.TestCase):
         finally:
             if not (initializing_stream is None) and not initializing_stream.closed:
                 initializing_stream.close()
-            if not (check_stream is None)and not check_stream.closed:
+            if not (check_stream is None) and not check_stream.closed:
                 check_stream.close()
 
             os.remove(read_stream_path)

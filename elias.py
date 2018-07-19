@@ -115,7 +115,7 @@ def _encode_file_content(read_stream_path, write_stream_path, threading_data=Non
 
         # print(thread_info, encoded_data)
 
-        write_stream.write(bytearray(characters_by_frequency, encoding='utf-8'))
+        write_stream.write(bytearray(characters_by_frequency, encoding=file_access_modes.default_file_encoding))
         write_stream.write(utilities.get_characters_by_frequency_delimiter())
         write_stream.write(byte_array)
 
@@ -141,12 +141,12 @@ def decode(read_stream_path, write_stream_path, *, code_type):
     write_stream = None
 
     try:
-        read_stream = open(read_stream_path, 'rb')
-        write_stream = open(write_stream_path, 'w', encoding='utf-8')
+        read_stream = open(read_stream_path, **file_access_modes.decode_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.decode_write_configuration)
 
-        characters_by_frequency_binary, binary_data = read_stream.read().split(
-            utilities.get_characters_by_frequency_delimiter())
-        characters_by_frequency = characters_by_frequency_binary.decode(encoding='utf-8')
+        characters_by_frequency_binary, binary_data = \
+            read_stream.read().split(utilities.get_characters_by_frequency_delimiter())
+        characters_by_frequency = characters_by_frequency_binary.decode(encoding=file_access_modes.default_file_encoding)
 
         code_function = _get_code_function(code_type)
         ending_bit = _get_ending_bit(code_type)
