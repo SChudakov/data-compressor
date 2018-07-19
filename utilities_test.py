@@ -6,6 +6,9 @@ import utilities
 
 class UtilitiesTest(unittest.TestCase):
 
+    # def setUp(self):
+    #     utilities.thread_chunk_size = 10 * 1024 * 1024
+
     def test_wiki_binary_string(self):
         encoded_data = '101000111100010001010111110010001110001111010100' \
                        '011011011101011111100100011110100000100010000000'
@@ -76,3 +79,21 @@ class UtilitiesTest(unittest.TestCase):
         codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
+
+    def test_num_of_threads(self):
+        twenty_mb_file_path = 'D:\\workspace.python\\data-compresor\\files\\20_mb_file.txt'
+        fifty_mb_file_path = 'D:\\workspace.python\\data-compresor\\files\\50_mb_file.txt'
+        hudred_mb_file_path = 'D:\\workspace.python\data-compresor\\files\\100_mb_file.txt'
+
+    def test_get_tmp_file_name(self):
+        expected_first = r'file_name_thread_1.txt'
+        expected_second = r'file_name_thread_2.epub'
+        expected_third = r'D:\workspace.python\data-compresor\files\100_mb_file_thread_3.txt'
+
+        first = utilities.get_thread_result_file_name(r'file_name.txt', 1)
+        second = utilities.get_thread_result_file_name(r'file_name.epub', 2)
+        third = utilities.get_thread_result_file_name(r'D:\workspace.python\data-compresor\files\100_mb_file.txt', 3)
+
+        self.assertEqual(expected_first, first)
+        self.assertEqual(expected_second, second)
+        self.assertEqual(expected_third, third)

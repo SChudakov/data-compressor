@@ -1,4 +1,5 @@
 import collections
+import os
 
 
 def generate_codes(characters_by_frequency, code_function):
@@ -75,3 +76,20 @@ def to_binary(number):
 
 def get_characters_by_frequency_delimiter():
     return b'|'
+
+
+def threading_configuration(file_path):
+    pass
+
+def file_length_in_bytes(file_path):
+    return os.stat(file_path).st_size
+
+
+def get_thread_result_file_name(write_file_path, thread_number):
+    result = list()
+    name, extension = os.path.splitext(write_file_path)
+    result.append(name)
+    result.append('_thread_')
+    result.append(str(thread_number))
+    result.append(extension)
+    return ''.join(result)

@@ -1,4 +1,9 @@
+import os
+import queue
+import threading
+
 import elias_code_functions
+import file_access_modes
 import utilities
 
 gamma_code_ending_bit = '0'
@@ -6,37 +11,121 @@ delta_code_ending_bit = '0'
 omega_code_ending_bit = '1'
 
 
-def encode(read_stream_path, write_stream_path, *, code_type):
+def encode(read_stream_path, write_stream_path, *, code_type, hyper_threaded):
+    code_function = _get_code_function(code_type)
+    ending_bit = _get_ending_bit(code_type)
+    if hyper_threaded:
+        _hyper_threaded_encode(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+    else:
+        _sequential_encode(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+
+
+def _sequential_encode(read_stream_path, write_stream_path, *, code_function, ending_bit):
+    _encode_file_content(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+
+
+def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function, ending_bit):
+    num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
+
+    results_queue = queue.PriorityQueue()
+    threads = list()
+
+    for thread_number in range(1, num_of_threads + 1):
+
+        read_stream_start_position = thread_chunk * (thread_number - 1)
+        thread_tmp_file_path = utilities.get_thread_result_file_name(write_stream_path, thread_number)
+
+        if thread_number == num_of_threads:
+            read_limit = None
+        else:
+            read_limit = thread_chunk
+
+        threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
+        thread = threading.Thread(target=_encode_file_content, args=(read_stream_path, thread_tmp_file_path),
+                                  kwargs={
+                                      'threading_data': threading_data,
+                                      'code_function': code_function,
+                                      'ending_bit': ending_bit
+                                  })
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
+    _combine_threading_results(results_queue, write_stream_path, num_of_threads)
+
+
+def _combine_threading_results(results_queue, write_stream_path, num_of_threads):
+    write_stream = None
+    read_stream = None
+    try:
+        write_stream = open(write_stream_path, **file_access_modes.combine_write_configuration)
+        for priority in range(1, num_of_threads + 1):
+            thread_priority, thread_result_path = results_queue.get()
+            if thread_priority == priority:
+
+                read_stream = open(thread_result_path, **file_access_modes.combine_read_configuration)
+                read_file_data = read_stream.read()
+                read_stream.close()
+                os.remove(thread_result_path)
+
+                write_stream.write(read_file_data)
+            else:
+                raise ValueError('the {}-th priority in the queue is {}'.format(priority, thread_priority))
+    finally:
+        if not (read_stream is None):
+            read_stream.close()
+
+        if not (write_stream is None):
+            write_stream.close()
+
+
+def _encode_file_content(read_stream_path, write_stream_path, threading_data=None, *, code_function, ending_bit):
     read_stream = None
     write_stream = None
-    try:
-        read_stream = open(read_stream_path, 'r', encoding='utf-8')
-        write_stream = open(write_stream_path, 'wb')
 
-        data = read_stream.read()
+    try:
+        read_stream = open(read_stream_path, **file_access_modes.encode_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.encode_write_configuration)
+
+        results_queue = None
+        thread_number = None
+
+        # thread_info = None
+        if not (threading_data is None):
+            results_queue, thread_number, read_stream_start_position, read_limit = threading_data
+            read_stream.seek(read_stream_start_position)
+            data = read_stream.read(read_limit)
+
+            # thread_info = 'thread_' + str(thread_number) + ':'
+            # print(thread_info, read_stream_start_position, read_limit)
+        else:
+            data = read_stream.read()
+
+        # print(thread_info, data)
 
         characters_frequencies = utilities.characters_frequencies(data)
         characters_by_frequency = utilities.to_characters_by_frequencies(characters_frequencies)
 
-        code_function = get_code_function(code_type)
-        ending_bit = get_ending_bit(code_type)
-
         codes = utilities.generate_codes(characters_by_frequency, code_function)
-        # print('data:', data)
-        # print('frequencies', '\n'.join(map(str, characters_frequencies.items())), sep='\n')
-        # print('codes', '\n'.join(map(str, codes.items())), sep='\n')
 
         encoded_data = _encode_data(data, codes)
         byte_array = utilities.to_byte_array(encoded_data, ending_bit=ending_bit)
-        # print('encoded data', encoded_data)
-        # print('byte array', byte_array)
+
+        # print(thread_info, encoded_data)
 
         write_stream.write(bytearray(characters_by_frequency, encoding='utf-8'))
         write_stream.write(utilities.get_characters_by_frequency_delimiter())
         write_stream.write(byte_array)
+
+        if not (threading_data is None):
+            results_queue.put((thread_number, write_stream_path))
     finally:
-        read_stream.close()
-        write_stream.close()
+        if not (read_stream is None):
+            read_stream.close()
+        if not (write_stream is None):
+            write_stream.close()
 
 
 def _encode_data(data, codes):
@@ -59,9 +148,9 @@ def decode(read_stream_path, write_stream_path, *, code_type):
             utilities.get_characters_by_frequency_delimiter())
         characters_by_frequency = characters_by_frequency_binary.decode(encoding='utf-8')
 
-        code_function = get_code_function(code_type)
-        ending_bit = get_ending_bit(code_type)
-        read_code_function = get_read_code_function(code_type)
+        code_function = _get_code_function(code_type)
+        ending_bit = _get_ending_bit(code_type)
+        read_code_function = _get_read_code_function(code_type)
 
         codes = utilities.generate_codes(characters_by_frequency, code_function)
         reversed_codes = utilities.reverse_dictionary(codes)
@@ -77,8 +166,10 @@ def decode(read_stream_path, write_stream_path, *, code_type):
 
         write_stream.write(decoded_data)
     finally:
-        read_stream.close()
-        write_stream.close()
+        if not (read_stream is None):
+            read_stream.close()
+        if not (write_stream is None):
+            write_stream.close()
 
 
 def _decode_data(bits, reversed_codes, *, read_code_function, ending_bit):
@@ -166,7 +257,7 @@ def _count_ending_bits(bits, *, ending_bit):
     return result
 
 
-def get_code_function(code_type):
+def _get_code_function(code_type):
     if code_type == 'gamma':
         return elias_code_functions.gamma_code
     elif code_type == "delta":
@@ -177,7 +268,7 @@ def get_code_function(code_type):
         raise ValueError('invalid elias code type, valid types are gamma, delta and omage')
 
 
-def get_ending_bit(code_type):
+def _get_ending_bit(code_type):
     if code_type == 'gamma':
         return gamma_code_ending_bit
     elif code_type == "delta":
@@ -188,7 +279,7 @@ def get_ending_bit(code_type):
         raise ValueError('invalid elias code type, valid types are gamma, delta and omage')
 
 
-def get_read_code_function(code_type):
+def _get_read_code_function(code_type):
     if code_type == 'gamma':
         return _read_gamma_code
     elif code_type == "delta":
