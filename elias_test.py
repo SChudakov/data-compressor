@@ -27,7 +27,10 @@ class EliasTest(unittest.TestCase):
     @mock.patch('elias._get_code_function')
     @mock.patch('elias._get_ending_bit')
     @mock.patch('elias._sequential_encode')
-    def test_encode_sequential(self, mocked_sequential_encode, mocked_get_ending_bit, mocked_get_code_function):
+    def test_encode_sequential(self,
+                               mocked_sequential_encode,
+                               mocked_get_ending_bit,
+                               mocked_get_code_function):
         mocked_get_code_function.return_value = elias_code_functions.gamma_code
         mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
 
@@ -157,9 +160,8 @@ class EliasTest(unittest.TestCase):
 
     @mock.patch('utilities.threading_configuration')
     @mock.patch('utilities.get_thread_result_file_name')
-    @mock.patch('elias._combine_threading_results')
+    @mock.patch('elias._combine_threading_results', mock.Mock())
     def test_hyper_threaded_encode_simple_1_thread_results_file_content(self,
-                                                                        mocked_combine_threading_results,
                                                                         mocked_get_thread_result_file_name,
                                                                         mocked_threading_configuration):
         data = "ABBCCCDDDD"
@@ -252,9 +254,8 @@ class EliasTest(unittest.TestCase):
 
     @mock.patch('utilities.threading_configuration')
     @mock.patch('utilities.get_thread_result_file_name')
-    @mock.patch('elias._combine_threading_results')
+    @mock.patch('elias._combine_threading_results', mock.Mock())
     def test_hyper_threaded_encode_TBER_3_thread_results_file_content(self,
-                                                                      mocked_combine_threading_results,
                                                                       mocked_get_thread_result_file_name,
                                                                       mocked_threading_configuration):
         data = "RRRREEEBBTTRREBRBEERERBBTRERER"
