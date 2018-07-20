@@ -83,18 +83,27 @@ def get_thread_chunk_delimiter():
 
 
 def threading_configuration(file_path):
-    pass
+    return 4, 20481 // 4
 
 
 def file_length_in_bytes(file_path):
     return os.stat(file_path).st_size
 
 
-def get_thread_result_file_name(write_file_path, thread_number):
+def thread_result_file_path(processed_file_path, thread_number, *, task_mark=None):
+    under_lime = '_'
     result = list()
-    name, extension = os.path.splitext(write_file_path)
+    name, extension = os.path.splitext(processed_file_path)
     result.append(name)
-    result.append('_thread_')
+    result.append(under_lime)
+    result.append('thread')
+    result.append(under_lime)
     result.append(str(thread_number))
+
+    if not (task_mark is None):
+        result.append(under_lime)
+        result.append(task_mark)
+        result.append(under_lime)
+
     result.append(extension)
     return ''.join(result)

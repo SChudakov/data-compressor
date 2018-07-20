@@ -33,7 +33,7 @@ def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function
     for thread_number in range(1, num_of_threads + 1):
 
         read_stream_start_position = thread_chunk * (thread_number - 1)
-        thread_tmp_file_path = utilities.get_thread_result_file_name(write_stream_path, thread_number)
+        thread_result_file_path = utilities.thread_result_file_path(write_stream_path, thread_number)
 
         if thread_number == num_of_threads:
             read_limit = None
@@ -41,7 +41,7 @@ def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function
             read_limit = thread_chunk
 
         threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
-        thread = threading.Thread(target=_encode_file_content, args=(read_stream_path, thread_tmp_file_path),
+        thread = threading.Thread(target=_encode_file_content, args=(read_stream_path, thread_result_file_path),
                                   kwargs={
                                       'threading_data': threading_data,
                                       'code_function': code_function,
@@ -60,17 +60,18 @@ def _combine_threading_results(results_queue, write_stream_path, num_of_threads)
     write_stream = None
     read_stream = None
     try:
-        write_stream = open(write_stream_path, **file_access_modes.combine_write_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.write_bytes_configuration)
         for priority in range(1, num_of_threads + 1):
             thread_priority, thread_result_path = results_queue.get()
             if thread_priority == priority:
 
-                read_stream = open(thread_result_path, **file_access_modes.combine_read_configuration)
+                read_stream = open(thread_result_path, **file_access_modes.read_bytes_configuration)
                 read_file_data = read_stream.read()
                 read_stream.close()
-                os.remove(thread_result_path)
-
+                print(read_file_data)
                 write_stream.write(read_file_data)
+
+                os.remove(thread_result_path)
             else:
                 raise ValueError('the {}-th priority in the queue is {}'.format(priority, thread_priority))
     finally:
@@ -86,24 +87,17 @@ def _encode_file_content(read_stream_path, write_stream_path, threading_data=Non
     write_stream = None
 
     try:
-        read_stream = open(read_stream_path, **file_access_modes.encode_read_configuration)
-        write_stream = open(write_stream_path, **file_access_modes.encode_write_configuration)
+        read_stream = open(read_stream_path, **file_access_modes.default_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.write_bytes_configuration)
 
         results_queue = None
         thread_number = None
-
-        # thread_info = None
+        read_limit = None
         if not (threading_data is None):
             results_queue, thread_number, read_stream_start_position, read_limit = threading_data
             read_stream.seek(read_stream_start_position)
-            data = read_stream.read(read_limit)
 
-            # thread_info = 'thread_' + str(thread_number) + ':'
-            # print(thread_info, read_stream_start_position, read_limit)
-        else:
-            data = read_stream.read()
-
-        # print(thread_info, data)
+        data = read_stream.read(read_limit)
 
         characters_frequencies = utilities.characters_frequencies(data)
         characters_by_frequency = utilities.to_characters_by_frequencies(characters_frequencies)
@@ -112,8 +106,6 @@ def _encode_file_content(read_stream_path, write_stream_path, threading_data=Non
 
         encoded_data = _encode_data(data, codes)
         byte_array = utilities.to_byte_array(encoded_data, ending_bit=ending_bit)
-
-        # print(thread_info, encoded_data)
 
         write_stream.write(bytearray(characters_by_frequency, encoding=file_access_modes.default_file_encoding))
         write_stream.write(utilities.get_characters_by_frequency_delimiter())
@@ -141,12 +133,13 @@ def decode(read_stream_path, write_stream_path, *, code_type):
     write_stream = None
 
     try:
-        read_stream = open(read_stream_path, **file_access_modes.decode_read_configuration)
-        write_stream = open(write_stream_path, **file_access_modes.decode_write_configuration)
+        read_stream = open(read_stream_path, **file_access_modes.read_bytes_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.default_write_configuration)
 
         characters_by_frequency_binary, binary_data = \
             read_stream.read().split(utilities.get_characters_by_frequency_delimiter())
-        characters_by_frequency = characters_by_frequency_binary.decode(encoding=file_access_modes.default_file_encoding)
+        characters_by_frequency = characters_by_frequency_binary.decode(
+            encoding=file_access_modes.default_file_encoding)
 
         code_function = _get_code_function(code_type)
         ending_bit = _get_ending_bit(code_type)

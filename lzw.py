@@ -7,8 +7,8 @@ def encode(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
-        read_stream = open(read_stream_path, **file_access_modes.encode_read_configuration)
-        write_stream = open(write_stream_path, **file_access_modes.encode_write_configuration)
+        read_stream = open(read_stream_path, **file_access_modes.default_read_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.write_bytes_configuration)
 
         data = read_stream.read()
         dictionary = _generate_dictionary()
@@ -61,8 +61,8 @@ def decode(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
-        read_stream = open(read_stream_path, **file_access_modes.decode_read_configuration)
-        write_stream = open(write_stream_path, **file_access_modes.decode_write_configuration)
+        read_stream = open(read_stream_path, **file_access_modes.read_bytes_configuration)
+        write_stream = open(write_stream_path, **file_access_modes.default_write_configuration)
 
         binary_data = read_stream.read()
         bits = utilities.to_bits(binary_data)

@@ -90,9 +90,9 @@ class UtilitiesTest(unittest.TestCase):
         expected_second = r'file_name_thread_2.epub'
         expected_third = r'D:\workspace.python\data-compresor\files\100_mb_file_thread_3.txt'
 
-        first = utilities.get_thread_result_file_name(r'file_name.txt', 1)
-        second = utilities.get_thread_result_file_name(r'file_name.epub', 2)
-        third = utilities.get_thread_result_file_name(r'D:\workspace.python\data-compresor\files\100_mb_file.txt', 3)
+        first = utilities.thread_result_file_path(r'file_name.txt', 1)
+        second = utilities.thread_result_file_path(r'file_name.epub', 2)
+        third = utilities.thread_result_file_path(r'D:\workspace.python\data-compresor\files\100_mb_file.txt', 3)
 
         self.assertEqual(expected_first, first)
         self.assertEqual(expected_second, second)
