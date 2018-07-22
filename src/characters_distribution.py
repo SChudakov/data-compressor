@@ -1,11 +1,13 @@
+import collections
 import functools
 import os
+import queue
 import threading
 
 from src import file_access_modes, utilities
 
 
-def count_characters_distribution(read_stream_path):
+def map_reduce_count(read_stream_path):
     num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
 
     mapper_threads = list()
@@ -110,3 +112,59 @@ def _reducer(character_values_tuple, reduced_results):
     reduced_values = functools.reduce(lambda x, y: x + y, values_list)
     reduced_tuple = (character, reduced_values)
     reduced_results.append(reduced_tuple)
+
+
+def high_performance_count(read_stream_path):
+    num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
+
+    threads = list()
+    threads_result_dicts = queue.Queue()
+    for thread_number in range(1, num_of_threads + 1):
+
+        read_stream_start_position = thread_chunk * (thread_number - 1)
+
+        if thread_number == num_of_threads:
+            read_limit = None
+        else:
+            read_limit = thread_chunk
+
+        thread = threading.Thread(target=_high_performance_characters_frequencies_count,
+                                  args=(read_stream_path,
+                                      read_stream_start_position,
+                                      read_limit,
+                                      threads_result_dicts,
+                                        thread_number)
+                                  )
+        thread.start()
+        threads.append(thread)
+        print('thread {} starter'.format(thread_number))
+
+    return _combine_dictionaries(threads_result_dicts, num_of_threads)
+
+
+def _high_performance_characters_frequencies_count(read_stream_path, read_start_position, read_limit, results_queue,
+                                                   thread_number):
+    read_stream = None
+
+    try:
+        read_stream = open(read_stream_path, **file_access_modes.default_read_configuration)
+
+        read_stream.seek(read_start_position)
+        thread_chunk = read_stream.read(read_limit)
+        results_queue.put(collections.Counter(thread_chunk))
+        print('thread {} ended'.format(thread_number))
+    finally:
+        if not (read_stream is None) and not read_stream.closed:
+            read_stream.close()
+
+
+def _combine_dictionaries(dicts_queue, num_of_dicts):
+    result = dict()
+    for i in range(num_of_dicts):
+        counter = dicts_queue.get()
+        for char, frequency in counter.items():
+            if not (char in result.keys()):
+                result[char] = 0
+            result[char] += frequency
+
+    return result

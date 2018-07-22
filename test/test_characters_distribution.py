@@ -15,10 +15,10 @@ class CharactersDistributionTest(unittest.TestCase):
     @mock.patch('src.utilities.threading_configuration')
     @mock.patch('src.utilities.thread_result_file_path')
     @mock.patch('src.characters_distribution._shuffle_mapper_results')
-    def test_count_characters_distribution_thread_results_file_content(self,
-                                                                       mocked__shuffle_mapper_results,
-                                                                       mocked_thread_result_file_path,
-                                                                       mocked_threading_configuration):
+    def test_map_reduce_count_thread_results_file_content(self,
+                                                          mocked__shuffle_mapper_results,
+                                                          mocked_thread_result_file_path,
+                                                          mocked_threading_configuration):
         data = "AAAABBBBCCCC"
 
         expected_thread_1_encoded_data = 'A 1\nA 1\nA 1\nA 1'
@@ -52,7 +52,7 @@ class CharactersDistributionTest(unittest.TestCase):
             initializing_stream.write(data)
             initializing_stream.close()
 
-            characters_distribution.count_characters_distribution(read_stream_path)
+            characters_distribution.map_reduce_count(read_stream_path)
 
             thread_1_check_stream = open(thread_1_result_file, 'r', encoding='utf-8')
             thread_2_check_stream = open(thread_2_result_file, 'r', encoding='utf-8')
@@ -89,7 +89,7 @@ class CharactersDistributionTest(unittest.TestCase):
             os.remove(thread_2_result_file)
 
     @mock.patch('src.utilities.threading_configuration')
-    def test_count_characters_distribution_result(self, mocked_threading_configuration):
+    def test_map_reduce_count_result(self, mocked_threading_configuration):
         data = "ABCABCABCABC"
         expected_characters_distributions = {('B', 4), ('C', 4), ('A', 4)}
 
@@ -105,8 +105,8 @@ class CharactersDistributionTest(unittest.TestCase):
             write_stream = open(read_file_path, 'w', encoding='utf-8')
             write_stream.write(data)
             write_stream.close()
-
-            characters_distributions = set(characters_distribution.count_characters_distribution(read_file_path))
+            print(characters_distribution.map_reduce_count(read_file_path))
+            characters_distributions = set(characters_distribution.map_reduce_count(read_file_path))
 
             self.assertEqual(expected_characters_distributions, characters_distributions)
         finally:
@@ -178,3 +178,31 @@ class CharactersDistributionTest(unittest.TestCase):
         characters_distribution._reducer(character_values_tuple, reduced_results)
 
         self.assertIn(expected_reduced_tuple, reduced_results)
+
+    # ---------------- test high_performance_count -----------------
+
+    @mock.patch('src.utilities.threading_configuration')
+    def test_count_characters_distribution_result(self, mocked_threading_configuration):
+        data = "ABCABCABCABC"
+        expected_characters_distributions = {'B': 4, 'C': 4, 'A': 4}
+
+        num_of_threads = 3
+        thread_chunk = 4
+
+        mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
+
+        read_file_path = configuration.test_file_path('test_count_characters_distribution_result')
+
+        write_stream = None
+        try:
+            write_stream = open(read_file_path, 'w', encoding='utf-8')
+            write_stream.write(data)
+            write_stream.close()
+
+            characters_distributions = characters_distribution.high_performance_count(read_file_path)
+
+            self.assertEqual(expected_characters_distributions, characters_distributions)
+        finally:
+            if not (read_file_path is None):
+                write_stream.close()
+            os.remove(read_file_path)
