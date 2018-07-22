@@ -2,9 +2,7 @@ import os
 import queue
 import threading
 
-import elias_code_functions
-import file_access_modes
-import utilities
+from src import file_access_modes, elias_code_functions, utilities
 
 gamma_code_ending_bit = '0'
 delta_code_ending_bit = '0'
@@ -68,7 +66,6 @@ def _combine_threading_results(results_queue, write_stream_path, num_of_threads)
                 read_stream = open(thread_result_path, **file_access_modes.read_bytes_configuration)
                 read_file_data = read_stream.read()
                 read_stream.close()
-                print(read_file_data)
                 write_stream.write(read_file_data)
 
                 os.remove(thread_result_path)

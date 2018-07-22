@@ -1,5 +1,4 @@
-import file_access_modes
-import utilities
+from src import file_access_modes, utilities
 
 end_of_file = chr(int('0x00', base=16))
 

@@ -5,9 +5,8 @@ import unittest
 
 import mock
 
-import elias
-import elias_code_functions
-import utilities
+from src import elias_code_functions, elias, utilities
+from test import configuration
 
 
 class EliasTest(unittest.TestCase):
@@ -24,9 +23,9 @@ class EliasTest(unittest.TestCase):
 
     # ---------------- test encode --------------
 
-    @mock.patch('elias._get_code_function')
-    @mock.patch('elias._get_ending_bit')
-    @mock.patch('elias._sequential_encode')
+    @mock.patch('src.elias._get_code_function')
+    @mock.patch('src.elias._get_ending_bit')
+    @mock.patch('src.elias._sequential_encode')
     def test_encode_sequential(self,
                                mocked_sequential_encode,
                                mocked_get_ending_bit,
@@ -34,8 +33,8 @@ class EliasTest(unittest.TestCase):
         mocked_get_code_function.return_value = elias_code_functions.gamma_code
         mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
 
-        read_stream_path = 'read stream path'
-        write_stream_path = 'write stream path'
+        read_stream_path = configuration.test_file_path('read stream path')
+        write_stream_path = configuration.test_file_path('write stream path')
         code_type = 'gamma'
         hyper_threaded = False
 
@@ -56,9 +55,9 @@ class EliasTest(unittest.TestCase):
                'ending_bit': expected_ending_bit_parameter_value}
         )
 
-    @mock.patch('elias._get_code_function')
-    @mock.patch('elias._get_ending_bit')
-    @mock.patch('elias._hyper_threaded_encode')
+    @mock.patch('src.elias._get_code_function')
+    @mock.patch('src.elias._get_ending_bit')
+    @mock.patch('src.elias._hyper_threaded_encode')
     def test_encode_not_hyper_threaded(self,
                                        mocked_hyper_threaded_encode,
                                        mocked_get_ending_bit,
@@ -96,10 +95,10 @@ class EliasTest(unittest.TestCase):
         thread_3_data = b'thread_3'
         expected_combined_data = thread_1_data + thread_2_data + thread_3_data
 
-        thread_1_file = 'test_files\\combine_threading_results_test_thread_1.txt'
-        thread_2_file = 'test_files\\combine_threading_results_test_thread_2.txt'
-        thread_3_file = 'test_files\\combine_threading_results_test_thread_3.txt'
-        combined_results_file = 'test_files\\combined_results.txt'
+        thread_1_file = configuration.test_file_path('combine_threading_results_test_thread_1.txt')
+        thread_2_file = configuration.test_file_path('combine_threading_results_test_thread_2.txt')
+        thread_3_file = configuration.test_file_path('combine_threading_results_test_thread_3.txt')
+        combined_results_file = configuration.test_file_path('combined_results.txt')
 
         thread_1_path = pathlib.Path(thread_1_file)
         thread_2_path = pathlib.Path(thread_2_file)
@@ -153,21 +152,26 @@ class EliasTest(unittest.TestCase):
             os.remove(combined_results_file)
 
     def test_combine_threading_results_wrong_priority(self):
-        thread_2_file = 'test_files\\thread_2.txt'
-        combined_results_file = 'test_files\\combined_results.txt'
+        combined_results_file = configuration.test_file_path('combined_results.txt')
+        thread_2_file = configuration.test_file_path('thread_2.txt')
 
         results_queue = queue.PriorityQueue()
         results_queue.put({2, thread_2_file})
 
-        self.assertRaises(ValueError, elias._combine_threading_results, results_queue, combined_results_file, 3)
+        try:
+            self.assertRaises(ValueError, elias._combine_threading_results, results_queue, combined_results_file, 3)
+        finally:
+            # since _combine_threading_results opens stream for
+            # combined_results_file, is should be deleted afterwards
+            os.remove(combined_results_file)
 
     # ---------------- test _hyper_threaded_encode --------------
 
-    @mock.patch('utilities.threading_configuration')
-    @mock.patch('utilities.get_thread_result_file_name')
-    @mock.patch('elias._combine_threading_results', mock.Mock())
+    @mock.patch('src.utilities.threading_configuration')
+    @mock.patch('src.utilities.thread_result_file_path')
+    @mock.patch('src.elias._combine_threading_results', mock.Mock())
     def test_hyper_threaded_encode_simple_1_thread_results_file_content(self,
-                                                                        mocked_get_thread_result_file_name,
+                                                                        mocked_thread_result_file_path,
                                                                         mocked_threading_configuration):
         data = "ABBCCCDDDD"
 
@@ -193,20 +197,20 @@ class EliasTest(unittest.TestCase):
         # 11110000
         # F0
 
-        thread_1_result_file = 'test_files\\hyper_threaded_gamma_simple_thread_1.txt'
-        thread_2_result_file = 'test_files\\hyper_threaded_gamma_simple_thread_2.txt'
-        thread_3_result_file = 'test_files\\hyper_threaded_gamma_simple_thread_3.txt'
+        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_1.txt')
+        thread_2_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_2.txt')
+        thread_3_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_3.txt')
 
         num_of_threads = 3
         thread_chunk = 3
 
         mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
-        mocked_get_thread_result_file_name.side_effect = [thread_1_result_file,
-                                                          thread_2_result_file,
-                                                          thread_3_result_file]
+        mocked_thread_result_file_path.side_effect = [thread_1_result_file,
+                                                      thread_2_result_file,
+                                                      thread_3_result_file]
 
-        read_stream_path = 'test_files\\hyper_threaded_gamma_simple.txt'
-        write_stream_path = "test_files\\hyper_threaded_gamma_simple_encoded.txt"
+        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple.txt')
+        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple_encoded.txt')
 
         initializing_stream = None
         thread_1_check_stream = None
@@ -256,11 +260,11 @@ class EliasTest(unittest.TestCase):
             os.remove(thread_3_result_file)
             os.remove(thread_2_result_file)
 
-    @mock.patch('utilities.threading_configuration')
-    @mock.patch('utilities.get_thread_result_file_name')
-    @mock.patch('elias._combine_threading_results', mock.Mock())
+    @mock.patch('src.utilities.threading_configuration')
+    @mock.patch('src.utilities.thread_result_file_path')
+    @mock.patch('src.elias._combine_threading_results', mock.Mock())
     def test_hyper_threaded_encode_TBER_3_thread_results_file_content(self,
-                                                                      mocked_get_thread_result_file_name,
+                                                                      mocked_thread_result_file_path,
                                                                       mocked_threading_configuration):
         data = "RRRREEEBBTTRREBRBEERERBBTRERER"
 
@@ -294,20 +298,20 @@ class EliasTest(unittest.TestCase):
         # 01010110 11001001 01010101
         # 56       C9       55
 
-        thread_1_result_file = 'test_files\\hyper_threaded_gamma_TBER_thread_1.txt'
-        thread_2_result_file = 'test_files\\hyper_threaded_gamma_TBER_thread_2.txt'
-        thread_3_result_file = 'test_files\\hyper_threaded_gamma_TBER_thread_3.txt'
+        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_1.txt')
+        thread_2_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_2.txt')
+        thread_3_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_3.txt')
 
         num_of_thread = 3
         thread_chunk = 10
 
         mocked_threading_configuration.return_value = (num_of_thread, thread_chunk)
-        mocked_get_thread_result_file_name.side_effect = [thread_1_result_file,
-                                                          thread_2_result_file,
-                                                          thread_3_result_file]
+        mocked_thread_result_file_path.side_effect = [thread_1_result_file,
+                                                      thread_2_result_file,
+                                                      thread_3_result_file]
 
-        read_stream_path = 'test_files\\hyper_threaded_gamma_TBER.txt'
-        write_stream_path = "test_files\\hyper_threaded_gamma_TBER_encoded.txt"
+        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_TBER.txt')
+        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_TBER_encoded.txt')
 
         initializing_stream = None
         thread_1_check_stream = None
@@ -357,14 +361,14 @@ class EliasTest(unittest.TestCase):
             os.remove(thread_2_result_file)
             os.remove(thread_3_result_file)
 
-    @mock.patch('utilities.threading_configuration')
-    @mock.patch('utilities.get_thread_result_file_name')
-    @mock.patch('elias._combine_threading_results')
-    @mock.patch('utilities.generate_codes')
+    @mock.patch('src.utilities.threading_configuration')
+    @mock.patch('src.utilities.thread_result_file_path')
+    @mock.patch('src.elias._combine_threading_results')
+    @mock.patch('src.utilities.generate_codes')
     def test_hyper_threaded_encode_wiki_1_thread_results_file_content(self,
                                                                       mocked_generate_codes,
                                                                       mocked_combine_threading_results,
-                                                                      mocked_get_thread_result_file_name,
+                                                                      mocked_thread_result_file_path,
                                                                       mocked_threading_configuration):
         data = "TOBEORNOTTOBEORTOBEORNOT"
 
@@ -383,19 +387,21 @@ class EliasTest(unittest.TestCase):
         thread_chunk = 24
         mocked_threading_configuration.return_value = (num_of_thread, thread_chunk)
 
-        thread_1_result_file = 'test_files\\hyper_threaded_gamma_wiki_thread_1.txt'
-        mocked_get_thread_result_file_name.side_effect = [thread_1_result_file]
+        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_wiki_thread_1.txt')
+        mocked_thread_result_file_path.side_effect = [thread_1_result_file]
 
         codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
         mocked_generate_codes.return_value = codes
 
         utilities.threading_configuration = mocked_threading_configuration
         elias._combine_threading_results = mocked_combine_threading_results
-        utilities.thread_result_file_path = mocked_get_thread_result_file_name
+        utilities.thread_result_file_path = mocked_thread_result_file_path
         utilities.generate_codes = mocked_generate_codes
 
-        read_stream_path = 'test_files\\hyper_threaded_gamma_wiki.txt'
-        write_stream_path = "test_files\\hyper_threaded_gamma_wiki_encoded.txt"
+        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_wiki.txt')
+        # since _combine_threading_results is mocked this file
+        # is not created and therefore needs not to be deleted
+        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_wiki_encoded.txt')
 
         initializing_stream = None
         thread_1_check_stream = None
@@ -418,11 +424,11 @@ class EliasTest(unittest.TestCase):
         finally:
             if not (initializing_stream is None) and not initializing_stream.closed:
                 initializing_stream.close()
-                os.remove(read_stream_path)
 
             if not (thread_1_check_stream is None) and not thread_1_check_stream.closed:
                 thread_1_check_stream.close()
 
+            os.remove(read_stream_path)
             os.remove(thread_1_result_file)
 
     # ---------------- test _encode_file_content --------------
@@ -438,8 +444,8 @@ class EliasTest(unittest.TestCase):
         # 00100011 01101001 00101111
         # 23       69       2F
 
-        read_stream_path = 'test_files\\simple_gamma.txt'
-        write_stream_path = "test_files\\simple_gamma_encoded.txt"
+        read_stream_path = configuration.test_file_path('simple_gamma.txt')
+        write_stream_path = configuration.test_file_path('\simple_gamma_encoded.txt')
 
         initializing_stream = None
         check_stream = None
@@ -478,8 +484,8 @@ class EliasTest(unittest.TestCase):
         # 01100 0101 0101 0100 0100 0100 1 1 1 1
         # 01100010 10101010 00100010 01111000
         # 62       AA       22       78
-        read_stream_path = 'test_files\\simple_delta.txt'
-        write_stream_path = "test_files\\simple_delta_encoded.txt"
+        read_stream_path = configuration.test_file_path('simple_delta.txt')
+        write_stream_path = configuration.test_file_path('simple_delta_encoded.txt')
 
         initializing_stream = None
         check_stream = None
@@ -519,8 +525,9 @@ class EliasTest(unittest.TestCase):
         # 10100011 01101001 00100000 0111111
         # A3       69       20       7F
         # 163      105      32       127
-        read_stream_path = 'test_files\\simple_omega.txt'
-        write_stream_path = "test_files\\simple_omega_encoded.txt"
+
+        read_stream_path = configuration.test_file_path('simple_omega.txt')
+        write_stream_path = configuration.test_file_path('simple_omega_encoded.txt')
 
         initializing_stream = None
         check_stream = None
@@ -624,8 +631,8 @@ class EliasTest(unittest.TestCase):
         initializing_stream = None
         check_stream = None
 
-        read_stream_path = 'test_files\\simple_encoded_gamma.txt'
-        write_file_path = 'test_files\\simple_decoded_gamma.txt'
+        read_stream_path = configuration.test_file_path('simple_encoded_gamma.txt')
+        write_file_path = configuration.test_file_path('simple_decoded_gamma.txt')
 
         try:
             initializing_stream = open(read_stream_path, 'wb')
@@ -652,8 +659,8 @@ class EliasTest(unittest.TestCase):
         binary_data = b'DCBA' + self.test_delimiter + b'\x62\xAA\x22\x78'
         expected_decoded_data = "ABBCCCDDDD"
 
-        read_stream_path = 'test_files\\simple_encoded_delta.txt'
-        write_stream_path = 'test_files\\simple_decoded_delta.txt'
+        read_stream_path = configuration.test_file_path('simple_encoded_delta.txt')
+        write_stream_path = configuration.test_file_path('simple_decoded_delta.txt')
 
         initializing_stream = None
         check_stream = None
@@ -683,8 +690,8 @@ class EliasTest(unittest.TestCase):
         binary_data = b'DCBA' + self.test_delimiter + b'\xA3\x69\x20\x7F'
         expected_decoded_data = "ABBCCCDDDD"
 
-        read_stream_path = 'test_files\\simple_encoded_omega.txt'
-        write_stream_path = 'test_files\\simple_decoded_omega.txt'
+        read_stream_path = configuration.test_file_path('simple_encoded_omega.txt')
+        write_stream_path = configuration.test_file_path('simple_decoded_omega.txt')
 
         initializing_stream = None
         check_stream = None

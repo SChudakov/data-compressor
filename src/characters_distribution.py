@@ -2,8 +2,7 @@ import functools
 import os
 import threading
 
-import file_access_modes
-import utilities
+from src import file_access_modes, utilities
 
 
 def count_characters_distribution(read_stream_path):

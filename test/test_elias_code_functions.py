@@ -1,6 +1,6 @@
 import unittest
 
-import elias_code_functions
+from src import elias_code_functions
 
 
 class EliasFunctionTest(unittest.TestCase):

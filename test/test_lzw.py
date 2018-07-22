@@ -1,6 +1,6 @@
 import unittest
 
-import lzw
+from src import lzw
 
 
 class LZWTest(unittest.TestCase):

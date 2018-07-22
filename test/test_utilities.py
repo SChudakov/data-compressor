@@ -1,13 +1,10 @@
 import unittest
 
-import elias_code_functions
-import utilities
+from src import elias_code_functions, utilities
 
 
 class UtilitiesTest(unittest.TestCase):
 
-    # def setUp(self):
-    #     utilities.thread_chunk_size = 10 * 1024 * 1024
 
     def test_wiki_binary_string(self):
         encoded_data = '101000111100010001010111110010001110001111010100' \
@@ -19,7 +16,7 @@ class UtilitiesTest(unittest.TestCase):
         #              ' 01101101 11010111 11100100 01111010 00001000 10000000'
         # code_nums = '163 196 87 200 227 212 109 215 228 122 8 128'
 
-        binary_data = utilities.to_byte_array(encoded_data)
+        binary_data = utilities.to_byte_array(encoded_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 
@@ -36,7 +33,7 @@ class UtilitiesTest(unittest.TestCase):
         encoded_data = '0110011101000'
         expected_binary_data = b'\x67\x40'
 
-        binary_data = utilities.to_byte_array(encoded_data)
+        binary_data = utilities.to_byte_array(encoded_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 
@@ -79,11 +76,6 @@ class UtilitiesTest(unittest.TestCase):
         codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
-
-    def test_num_of_threads(self):
-        twenty_mb_file_path = 'D:\\workspace.python\\data-compresor\\files\\20_mb_file.txt'
-        fifty_mb_file_path = 'D:\\workspace.python\\data-compresor\\files\\50_mb_file.txt'
-        hudred_mb_file_path = 'D:\\workspace.python\data-compresor\\files\\100_mb_file.txt'
 
     def test_get_tmp_file_name(self):
         expected_first = r'file_name_thread_1.txt'

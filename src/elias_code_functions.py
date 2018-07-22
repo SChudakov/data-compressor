@@ -1,4 +1,4 @@
-import utilities
+from src import utilities
 
 
 def _ensure_correct_number(number):

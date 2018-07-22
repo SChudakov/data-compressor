@@ -1,7 +1,7 @@
 from memory_measure import measure_memory_usage
 from time_measure import measure_time
 
-import lzw
+from src import lzw
 
 if __name__ == '__main__':
     print('lzw wap encode')
