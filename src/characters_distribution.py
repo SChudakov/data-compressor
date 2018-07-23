@@ -4,10 +4,132 @@ import os
 import queue
 import threading
 
-from src import file_access_modes, utilities
+import elias_code_functions
+import file_access_modes
+import kullback_leiber
+import utilities
+
+default_distribution_divergence = 0.05
 
 
-def map_reduce_count(read_stream_path):
+def code_type(file_path, maximum_distribution_divergence=default_distribution_divergence):
+    characters_frequencies = _high_performance_count(file_path)
+    characters_frequencies = [item[1] for item in characters_frequencies.items()]
+    characters_sum = sum(characters_frequencies)
+    characters_probabilities = list(map(lambda x: x / characters_sum, characters_frequencies))
+    num_of_character = len(characters_probabilities)
+
+    generated_gamma_distribution = _generate_gamma_code_distribution(num_of_character)
+    generated_delta_distribution = _generate_delta_code_distribution(num_of_character)
+    generated_omega_distribution = _generate_omega_code_distribution(num_of_character)
+
+    generated_gamma_distribution_sum = sum(generated_gamma_distribution)
+    generated_delta_distribution_sum = sum(generated_delta_distribution)
+    generated_omega_distribution_sum = sum(generated_omega_distribution)
+
+    gamma_distribution = list(map(lambda x: x / generated_gamma_distribution_sum, generated_gamma_distribution))
+    delta_distribution = list(map(lambda x: x / generated_delta_distribution_sum, generated_delta_distribution))
+    omega_distribution = list(map(lambda x: x / generated_omega_distribution_sum, generated_omega_distribution))
+
+    # print('characters probabilities sum: {}'.format(sum(characters_probabilities)))
+    # print('gamma_code_distribution sum: {}'.format(sum(gamma_distribution)))
+    # print('delta_code_distribution sum: {}'.format(sum(delta_distribution)))
+    # print('omega_code_distribution sum: {}'.format(sum(omega_distribution)))
+
+    gamma_divergence = kullback_leiber.kullback_leiber_distance(gamma_distribution, characters_probabilities)
+    delta_divergence = kullback_leiber.kullback_leiber_distance(delta_distribution, characters_probabilities)
+    omega_divergence = kullback_leiber.kullback_leiber_distance(omega_distribution, characters_probabilities)
+
+    # print('gamma_divergence: {}'.format(omega_divergence))
+    # print('delta_divergence: {}'.format(delta_divergence))
+    # print('omega_divergence: {}'.format(omega_divergence))
+
+    distribution_divergences = [(gamma_divergence, 'gamma'), (delta_divergence, 'delta'), (omega_divergence, 'omega')]
+
+    min_divergence, code_name = min(distribution_divergences)
+
+    if min_divergence < maximum_distribution_divergence:
+        return code_name
+
+
+def _generate_gamma_code_distribution(num_of_chars):
+    result = list()
+
+    code_length = 1
+    group_begin = 1
+    group_end = 2
+
+    while True:
+        i = group_begin
+        while i < group_end and i <= num_of_chars:
+            result.append(2 ** (-code_length))
+            i += 1
+
+        if group_end <= num_of_chars:
+            group_begin *= 2
+            group_end *= 2
+
+            code_length += 2
+        else:
+            break
+
+    return result
+
+
+def _generate_delta_code_distribution(num_of_chars):
+    result = list()
+
+    code_length = 1
+    group_number = 1
+    group_begin = 1
+    group_end = 2
+
+    while True:
+        i = group_begin
+        while i < group_end and i <= num_of_chars:
+            result.append(2 ** (-code_length))
+            i += 1
+
+        if group_end <= num_of_chars:
+            if group_number % 2 == 0:
+                code_length += 1
+            else:
+                code_length += 3
+
+            group_begin *= 2
+            group_end *= 2
+
+            group_number += 1
+        else:
+            break
+
+    return result
+
+
+def _generate_omega_code_distribution(num_of_chars):
+    result = list()
+
+    code_length = 1
+    group_begin = 1
+    group_end = 2
+
+    while True:
+        i = group_begin
+        while i < group_end and i <= num_of_chars:
+            result.append(2 ** (-code_length))
+            i += 1
+
+        if group_end <= num_of_chars + 1:
+            group_begin *= 2
+            group_end *= 2
+
+            code_length = len(str(elias_code_functions.omega_code(group_begin)))
+        else:
+            break
+    return result
+
+
+def _map_reduce_count(read_stream_path):
     num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
 
     mapper_threads = list()
@@ -114,7 +236,7 @@ def _reducer(character_values_tuple, reduced_results):
     reduced_results.append(reduced_tuple)
 
 
-def high_performance_count(read_stream_path):
+def _high_performance_count(read_stream_path):
     num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
 
     threads = list()
@@ -130,9 +252,9 @@ def high_performance_count(read_stream_path):
 
         thread = threading.Thread(target=_high_performance_characters_frequencies_count,
                                   args=(read_stream_path,
-                                      read_stream_start_position,
-                                      read_limit,
-                                      threads_result_dicts,
+                                        read_stream_start_position,
+                                        read_limit,
+                                        threads_result_dicts,
                                         thread_number)
                                   )
         thread.start()

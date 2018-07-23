@@ -52,7 +52,7 @@ class CharactersDistributionTest(unittest.TestCase):
             initializing_stream.write(data)
             initializing_stream.close()
 
-            characters_distribution.map_reduce_count(read_stream_path)
+            characters_distribution._map_reduce_count(read_stream_path)
 
             thread_1_check_stream = open(thread_1_result_file, 'r', encoding='utf-8')
             thread_2_check_stream = open(thread_2_result_file, 'r', encoding='utf-8')
@@ -105,8 +105,8 @@ class CharactersDistributionTest(unittest.TestCase):
             write_stream = open(read_file_path, 'w', encoding='utf-8')
             write_stream.write(data)
             write_stream.close()
-            print(characters_distribution.map_reduce_count(read_file_path))
-            characters_distributions = set(characters_distribution.map_reduce_count(read_file_path))
+            print(characters_distribution._map_reduce_count(read_file_path))
+            characters_distributions = set(characters_distribution._map_reduce_count(read_file_path))
 
             self.assertEqual(expected_characters_distributions, characters_distributions)
         finally:
@@ -199,7 +199,7 @@ class CharactersDistributionTest(unittest.TestCase):
             write_stream.write(data)
             write_stream.close()
 
-            characters_distributions = characters_distribution.high_performance_count(read_file_path)
+            characters_distributions = characters_distribution._high_performance_count(read_file_path)
 
             self.assertEqual(expected_characters_distributions, characters_distributions)
         finally:
