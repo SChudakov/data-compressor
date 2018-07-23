@@ -9,20 +9,21 @@ delta_code_ending_bit = '0'
 omega_code_ending_bit = '1'
 
 
-def encode(read_stream_path, write_stream_path, *, code_type, hyper_threaded):
+def compress(read_stream_path, write_stream_path, *, code_type, hyper_threaded):
     code_function = _get_code_function(code_type)
     ending_bit = _get_ending_bit(code_type)
     if hyper_threaded:
-        _hyper_threaded_encode(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+        _hyper_threaded_compress(read_stream_path, write_stream_path, code_function=code_function,
+                                 ending_bit=ending_bit)
     else:
-        _sequential_encode(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+        _sequential_compress(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
 
 
-def _sequential_encode(read_stream_path, write_stream_path, *, code_function, ending_bit):
-    _encode_file_content(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
+def _sequential_compress(read_stream_path, write_stream_path, *, code_function, ending_bit):
+    _compress_file_content(read_stream_path, write_stream_path, code_function=code_function, ending_bit=ending_bit)
 
 
-def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function, ending_bit):
+def _hyper_threaded_compress(read_stream_path, write_stream_path, *, code_function, ending_bit):
     num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
 
     results_queue = queue.PriorityQueue()
@@ -39,7 +40,7 @@ def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function
             read_limit = thread_chunk
 
         threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
-        thread = threading.Thread(target=_encode_file_content, args=(read_stream_path, thread_result_file_path),
+        thread = threading.Thread(target=_compress_file_content, args=(read_stream_path, thread_result_file_path),
                                   kwargs={
                                       'threading_data': threading_data,
                                       'code_function': code_function,
@@ -51,10 +52,10 @@ def _hyper_threaded_encode(read_stream_path, write_stream_path, *, code_function
     for thread in threads:
         thread.join()
 
-    _combine_threading_results(results_queue, write_stream_path, num_of_threads)
+    _combine_threads_results(results_queue, write_stream_path, num_of_threads)
 
 
-def _combine_threading_results(results_queue, write_stream_path, num_of_threads):
+def _combine_threads_results(results_queue, write_stream_path, num_of_threads):
     write_stream = None
     read_stream = None
     try:
@@ -79,7 +80,7 @@ def _combine_threading_results(results_queue, write_stream_path, num_of_threads)
             write_stream.close()
 
 
-def _encode_file_content(read_stream_path, write_stream_path, threading_data=None, *, code_function, ending_bit):
+def _compress_file_content(read_stream_path, write_stream_path, threading_data=None, *, code_function, ending_bit):
     read_stream = None
     write_stream = None
 
@@ -101,8 +102,8 @@ def _encode_file_content(read_stream_path, write_stream_path, threading_data=Non
 
         codes = utilities.generate_codes(characters_by_frequency, code_function)
 
-        encoded_data = _encode_data(data, codes)
-        byte_array = utilities.to_byte_array(encoded_data, ending_bit=ending_bit)
+        compressed_data = _compress_data(data, codes)
+        byte_array = utilities.to_byte_array(compressed_data, ending_bit=ending_bit)
 
         write_stream.write(bytearray(characters_by_frequency, encoding=file_access_modes.default_file_encoding))
         write_stream.write(utilities.get_characters_by_frequency_delimiter())
@@ -117,7 +118,7 @@ def _encode_file_content(read_stream_path, write_stream_path, threading_data=Non
             write_stream.close()
 
 
-def _encode_data(data, codes):
+def _compress_data(data, codes):
     result = list()
     for ch in data:
         # print(ch, ':', codes[ch])
@@ -125,7 +126,7 @@ def _encode_data(data, codes):
     return ''.join(result)
 
 
-def decode(read_stream_path, write_stream_path, *, code_type):
+def decompress(read_stream_path, write_stream_path, *, code_type):
     read_stream = None
     write_stream = None
 
@@ -152,9 +153,10 @@ def decode(read_stream_path, write_stream_path, *, code_type):
         # print('reverse_codes:', '\n'.join(map(str, reversed_codes.items())), sep='\n')
         # print('bits:', bits)
 
-        decoded_data = _decode_data(bits, reversed_codes, read_code_function=read_code_function, ending_bit=ending_bit)
+        decompressed_data = _decompress_data(bits, reversed_codes, read_code_function=read_code_function,
+                                        ending_bit=ending_bit)
 
-        write_stream.write(decoded_data)
+        write_stream.write(decompressed_data)
     finally:
         if not (read_stream is None):
             read_stream.close()
@@ -162,7 +164,7 @@ def decode(read_stream_path, write_stream_path, *, code_type):
             write_stream.close()
 
 
-def _decode_data(bits, reversed_codes, *, read_code_function, ending_bit):
+def _decompress_data(bits, reversed_codes, *, read_code_function, ending_bit):
     result = list()
 
     num_of_ending_bits = _count_ending_bits(bits, ending_bit=ending_bit)

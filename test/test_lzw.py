@@ -5,46 +5,53 @@ from src import lzw
 
 class LZWTest(unittest.TestCase):
 
-    def test_wiki_encode_data(self):
+    # ---------------- test compress --------------
+
+    def test_compress_data_special_case(self):
+        data = 'ABABABA'
+        expected_compressed_data = '0110011101000'
+        # lzw_code = '01 10 011 101 000'
+        # code_bytes = '01100111 01000'
+
+        compressed_data = lzw._compress_data(data, self.generate_special_case_dictionary())
+
+        self.assertEqual(expected_compressed_data, compressed_data)
+
+    # ---------------- test _compress_data --------------
+
+    def test_compress_data_wiki(self):
         data = 'TOBEORNOTTOBEORTOBEORNOT'
-        expected_encoded_data = '101000111100010001010111110010001110001111010100' \
+        expected_compressed_data = '101000111100010001010111110010001110001111010100' \
                                 '011011011101011111100100011110100000100010000000'
 
-        encoded_data = lzw._encode_data(data, self.generate_wiki_dictionary())
+        compressed_data = lzw._compress_data(data, self.generate_wiki_dictionary())
 
-        self.assertEqual(expected_encoded_data, encoded_data)
+        self.assertEqual(expected_compressed_data, compressed_data)
 
-    def test_wiki_decode(self):
+    # ---------------- test decompress --------------
+
+    def test_decompress_wiki(self):
         bits = '101000111100010001010111110010001110001111010100011011011101011111100100011110100000100010000000'
-        expected_decoded_data = 'TOBEORNOTTOBEORTOBEORNOT'
+        expected_decompressed_data = 'TOBEORNOTTOBEORTOBEORNOT'
 
         wiki_dictionary = self.generate_wiki_dictionary()
         wiki_reversed_dictionary = self.generate_wiki_reversed_dictionary()
 
-        decoded_data = lzw._decode_data(bits, wiki_dictionary, wiki_reversed_dictionary)
-        # print('decoded data', decoded_data)
+        decompressed_data = lzw._decompress_data(bits, wiki_dictionary, wiki_reversed_dictionary)
 
-        self.assertEqual(expected_decoded_data, decoded_data)
+        self.assertEqual(expected_decompressed_data, decompressed_data)
 
-    def test_special_case_encode_data(self):
-        data = 'ABABABA'
-        expected_encoded_data = '0110011101000'
-        # lzw_code = '01 10 011 101 000'
-        # code_bytes = '01100111 01000'
+    # ---------------- test _decompress_data --------------
 
-        encoded_data = lzw._encode_data(data, self.generate_special_case_dictionary())
-
-        self.assertEqual(expected_encoded_data, encoded_data)
-
-    def test_special_case_decode(self):
+    def test_decompress_special_case(self):
         bits = '0110011101000000'
-        expected_decoded_data = 'ABABABA'
+        expected_decompressed_data = 'ABABABA'
 
         special_case_dictionary = self.generate_special_case_dictionary()
         special_case_reversed_dictionary = self.generate_special_case_reversed_dictionary()
-        decoded_data = lzw._decode_data(bits, special_case_dictionary, special_case_reversed_dictionary)
+        decompressed_data = lzw._decompress_data(bits, special_case_dictionary, special_case_reversed_dictionary)
 
-        self.assertEqual(expected_decoded_data, decoded_data)
+        self.assertEqual(expected_decompressed_data, decompressed_data)
 
     @staticmethod
     def generate_special_case_dictionary():

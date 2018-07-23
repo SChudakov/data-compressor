@@ -2,7 +2,8 @@ from src import file_access_modes, utilities
 
 end_of_file = chr(int('0x00', base=16))
 
-def encode(read_stream_path, write_stream_path):
+
+def compress(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
@@ -12,10 +13,9 @@ def encode(read_stream_path, write_stream_path):
         data = read_stream.read()
         dictionary = _generate_dictionary()
 
-        encoded_data = _encode_data(data, dictionary)
-        # print('encoded data', encoded_data)
+        compressed_data = _compress_data(data, dictionary)
 
-        byte_array = utilities.to_byte_array(encoded_data)
+        byte_array = utilities.to_byte_array(compressed_data)
         write_stream.write(byte_array)
     finally:
         if not (read_stream is None):
@@ -24,7 +24,7 @@ def encode(read_stream_path, write_stream_path):
             write_stream.close()
 
 
-def _encode_data(data, dictionary):
+def _compress_data(data, dictionary):
     result = list()
     dictionary_length = len(dictionary.keys())
 
@@ -56,7 +56,7 @@ def _encode_data(data, dictionary):
     return ''.join(result)
 
 
-def decode(read_stream_path, write_stream_path):
+def decompress(read_stream_path, write_stream_path):
     read_stream = None
     write_stream = None
     try:
@@ -71,9 +71,8 @@ def decode(read_stream_path, write_stream_path):
         dictionary = _generate_dictionary()
         reversed_dictionary = utilities.reverse_dictionary(dictionary)
 
-        decoded_data = _decode_data(bits, dictionary, reversed_dictionary)
-        write_stream.write(decoded_data)
-        # print('decoded data:', decoded_data)
+        decompressed_data = _decompress_data(bits, dictionary, reversed_dictionary)
+        write_stream.write(decompressed_data)
     finally:
         if not (read_stream is None):
             read_stream.close()
@@ -81,42 +80,35 @@ def decode(read_stream_path, write_stream_path):
             write_stream.close()
 
 
-def _decode_data(bits, dictionary, reversed_dictionary):
+def _decompress_data(bits, dictionary, reversed_dictionary):
     result = list()
     dictionary_length = len(dictionary.keys())
     code_length = len(utilities.to_binary(dictionary_length))
 
     chunk = bits[0:code_length]
-    decoded_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
-    result.append(decoded_chunk)
-    phrase = decoded_chunk
-    # print(chunk, ':', decoded_chunk)
-    # print('append:', decoded_chunk)
+    decompressed_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
+    result.append(decompressed_chunk)
+    phrase = decompressed_chunk
 
     i = code_length
     while i + code_length < len(bits):
         chunk = bits[i: i + code_length]
         if '1' in chunk:
             if _remove_leading_zeros(chunk) in reversed_dictionary.keys():
-                decoded_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
+                decompressed_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
             else:
-                decoded_chunk = phrase + phrase[0]  # special clase
-            dict_element = phrase + decoded_chunk[0]
-            # print()
-            # print(chunk, ':', decoded_chunk)
+                decompressed_chunk = phrase + phrase[0]  # special clase
+            dict_element = phrase + decompressed_chunk[0]
 
             if not (dict_element in dictionary.items()):
-                result.append(decoded_chunk)
+                result.append(decompressed_chunk)
                 dictionary[dict_element] = utilities.to_binary(dictionary_length)
                 reversed_dictionary[utilities.to_binary(dictionary_length)] = dict_element
                 dictionary_length += 1
-                # print('append: ', decoded_chunk)
-                # print(dict_element, '->', to_binary(dictionary_length))
 
-                phrase = decoded_chunk
-                # print('phrase:', phrase)
+                phrase = decompressed_chunk
             else:
-                phrase += decoded_chunk
+                phrase += decompressed_chunk
 
             i += code_length
             if utilities.to_binary(dictionary_length).rstrip('0') == '1':

@@ -83,7 +83,7 @@ def get_thread_chunk_delimiter():
 
 
 def threading_configuration(file_path):
-    return 1, 0
+    pass
 
 
 def file_length_in_bytes(file_path):

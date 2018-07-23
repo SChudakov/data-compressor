@@ -7,7 +7,7 @@ class UtilitiesTest(unittest.TestCase):
 
 
     def test_wiki_binary_string(self):
-        encoded_data = '101000111100010001010111110010001110001111010100' \
+        compressed_data = '101000111100010001010111110010001110001111010100' \
                        '011011011101011111100100011110100000100010000000'
         expected_binary_data = b'\xa3\xc4W\xc8\xe3\xd4m\xd7\xe4z\x08\x80'
         # lzw_code = '10100 01111 00010 00101 01111 10010 ' \
@@ -16,7 +16,7 @@ class UtilitiesTest(unittest.TestCase):
         #              ' 01101101 11010111 11100100 01111010 00001000 10000000'
         # code_nums = '163 196 87 200 227 212 109 215 228 122 8 128'
 
-        binary_data = utilities.to_byte_array(encoded_data, ending_bit='0')
+        binary_data = utilities.to_byte_array(compressed_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 
@@ -30,10 +30,10 @@ class UtilitiesTest(unittest.TestCase):
         self.assertEqual(expected_bits, bits)
 
     def test_special_case_binary_data(self):
-        encoded_data = '0110011101000'
+        compressed_data = '0110011101000'
         expected_binary_data = b'\x67\x40'
 
-        binary_data = utilities.to_byte_array(encoded_data, ending_bit='0')
+        binary_data = utilities.to_byte_array(compressed_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 

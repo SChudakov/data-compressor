@@ -165,8 +165,7 @@ def _map_reduce_count(read_stream_path):
     for shuffled_mapper_result in shuffled_mapper_results_dict.items():
         thread = threading.Thread(target=_reducer,
                                   args=(shuffled_mapper_result,
-                                        reduced_tuples)
-                                  )
+                                        reduced_tuples))
         thread.start()
         reduced_threads.append(thread)
 
@@ -259,7 +258,6 @@ def _high_performance_count(read_stream_path):
                                   )
         thread.start()
         threads.append(thread)
-        print('thread {} starter'.format(thread_number))
 
     return _combine_dictionaries(threads_result_dicts, num_of_threads)
 
@@ -274,7 +272,6 @@ def _high_performance_characters_frequencies_count(read_stream_path, read_start_
         read_stream.seek(read_start_position)
         thread_chunk = read_stream.read(read_limit)
         results_queue.put(collections.Counter(thread_chunk))
-        print('thread {} ended'.format(thread_number))
     finally:
         if not (read_stream is None) and not read_stream.closed:
             read_stream.close()
