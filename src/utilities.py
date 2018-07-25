@@ -44,7 +44,7 @@ def extend_to_length(bit_string, length, *, extending_bit='0'):
     return ''.join(result)
 
 
-def to_byte_array(bit_string, *, ending_bit):
+def to_byte_array(bit_string, *, ending_bit='0'):
     num_of_bytes = count_num_of_bytes(bit_string)
     extended_string = extend_to_num_of_bytes(bit_string, num_of_bytes, extending_bit=ending_bit)
     # print('extended string:', extended_string)
@@ -93,7 +93,9 @@ def file_length_in_bytes(file_path):
 def thread_result_file_path(processed_file_path, thread_number, *, task_mark=None):
     under_lime = '_'
     result = list()
+
     name, extension = os.path.splitext(processed_file_path)
+
     result.append(name)
     result.append(under_lime)
     result.append('thread')
@@ -106,4 +108,21 @@ def thread_result_file_path(processed_file_path, thread_number, *, task_mark=Non
         result.append(under_lime)
 
     result.append(extension)
+    return ''.join(result)
+
+
+def default_write_file_path(read_file_path, command):
+    under_lime = '_'
+    ed = 'ed'
+    result = list()
+
+    name, extension = os.path.splitext(read_file_path)
+
+    result.append(name)
+    result.append(under_lime)
+    result.append(command)
+    result.append(ed)
+
+    result.append(extension)
+
     return ''.join(result)

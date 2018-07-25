@@ -3,7 +3,7 @@ import unittest
 from src import elias_code_functions, utilities
 
 
-class UtilitiesTest(unittest.TestCase):
+class TestUtilities(unittest.TestCase):
 
 
     def test_wiki_binary_string(self):

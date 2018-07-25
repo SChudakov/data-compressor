@@ -8,7 +8,7 @@ from src import characters_distribution
 from test import configuration
 
 
-class CharactersDistributionTest(unittest.TestCase):
+class TestCharactersDistribution(unittest.TestCase):
 
     # --------------   test count_characters_distribution   -----------------------
 

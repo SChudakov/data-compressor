@@ -1,4 +1,5 @@
-from src import file_access_modes, utilities
+import file_access_modes
+import utilities
 
 end_of_file = chr(int('0x00', base=16))
 
@@ -15,7 +16,7 @@ def compress(read_stream_path, write_stream_path):
 
         compressed_data = _compress_data(data, dictionary)
 
-        byte_array = utilities.to_byte_array(compressed_data)
+        byte_array = utilities.to_byte_array(compressed_data,)
         write_stream.write(byte_array)
     finally:
         if not (read_stream is None):

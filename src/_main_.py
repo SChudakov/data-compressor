@@ -1,2 +1,2 @@
 if __name__ == "__main__":
-    open(r'D:\workspace.python\data-compresor\test_files\lol.txt', 'r')
+    open('D:\workspace.python\data-compressor\\test_files\\test_execute_write.txt', 'w')

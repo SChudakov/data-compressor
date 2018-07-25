@@ -44,7 +44,7 @@ class EliasTest(unittest.TestCase):
         expected_code_function_parameter_value = elias_code_functions.gamma_code
         expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
 
-        elias.compress(read_stream_path, write_stream_path, code_type=code_type, hyper_threaded=hyper_threaded)
+        elias.compress(read_stream_path, write_stream_path, code_type=code_type, high_performance=hyper_threaded)
 
         mocked_get_code_function.assert_called_once_with(expected_code_type_parameter_value)
         mocked_get_ending_bit.assert_called_once_with(expected_code_type_parameter_value)
@@ -76,7 +76,7 @@ class EliasTest(unittest.TestCase):
         expected_code_function_parameter_value = elias_code_functions.gamma_code
         expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
 
-        elias.compress(read_stream_path, write_stream_path, code_type=code_type, hyper_threaded=hyper_threaded)
+        elias.compress(read_stream_path, write_stream_path, code_type=code_type, high_performance=hyper_threaded)
 
         mocked_get_code_function.assert_called_once_with(expected_code_type_parameter_value)
         mocked_get_ending_bit.assert_called_once_with(expected_code_type_parameter_value)

@@ -3,7 +3,7 @@ import unittest
 from src import elias_code_functions
 
 
-class EliasFunctionTest(unittest.TestCase):
+class TestEliasFunction(unittest.TestCase):
 
     def test_gamma_code_incorrect_number(self):
         self.assertRaises(ValueError, elias_code_functions.gamma_code, 0)

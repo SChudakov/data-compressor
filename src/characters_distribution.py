@@ -9,10 +9,8 @@ import file_access_modes
 import kullback_leiber
 import utilities
 
-default_distribution_divergence = 0.05
 
-
-def code_type(file_path, maximum_distribution_divergence=default_distribution_divergence):
+def code_type(file_path,*, distribution_divergence):
     characters_frequencies = _high_performance_count(file_path)
     characters_frequencies = [item[1] for item in characters_frequencies.items()]
     characters_sum = sum(characters_frequencies)
@@ -48,7 +46,7 @@ def code_type(file_path, maximum_distribution_divergence=default_distribution_di
 
     min_divergence, code_name = min(distribution_divergences)
 
-    if min_divergence < maximum_distribution_divergence:
+    if min_divergence < distribution_divergence:
         return code_name
 
 

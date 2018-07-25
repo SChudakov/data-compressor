@@ -3,7 +3,7 @@ import unittest
 from src import lzw
 
 
-class LZWTest(unittest.TestCase):
+class TestLZW(unittest.TestCase):
 
     # ---------------- test compress --------------
 

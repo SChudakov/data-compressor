@@ -2,17 +2,19 @@ import os
 import queue
 import threading
 
-from src import file_access_modes, elias_code_functions, utilities
+import elias_code_functions
+import file_access_modes
+import utilities
 
 gamma_code_ending_bit = '0'
 delta_code_ending_bit = '0'
 omega_code_ending_bit = '1'
 
 
-def compress(read_stream_path, write_stream_path, *, code_type, hyper_threaded):
+def compress(read_stream_path, write_stream_path, *, code_type, high_performance=False):
     code_function = _get_code_function(code_type)
     ending_bit = _get_ending_bit(code_type)
-    if hyper_threaded:
+    if high_performance:
         _hyper_threaded_compress(read_stream_path, write_stream_path, code_function=code_function,
                                  ending_bit=ending_bit)
     else:
@@ -126,7 +128,7 @@ def _compress_data(data, codes):
     return ''.join(result)
 
 
-def decompress(read_stream_path, write_stream_path, *, code_type):
+def decompress(read_stream_path, write_stream_path, *, code_type, high_performance):
     read_stream = None
     write_stream = None
 
@@ -154,7 +156,7 @@ def decompress(read_stream_path, write_stream_path, *, code_type):
         # print('bits:', bits)
 
         decompressed_data = _decompress_data(bits, reversed_codes, read_code_function=read_code_function,
-                                        ending_bit=ending_bit)
+                                             ending_bit=ending_bit)
 
         write_stream.write(decompressed_data)
     finally:
