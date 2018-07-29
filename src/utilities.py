@@ -44,23 +44,31 @@ def extend_to_length(bit_string, length, *, extending_bit='0'):
     return ''.join(result)
 
 
-def to_byte_array(bit_string, *, ending_bit='0'):
-    num_of_bytes = count_num_of_bytes(bit_string)
-    extended_string = extend_to_num_of_bytes(bit_string, num_of_bytes, extending_bit=ending_bit)
-    # print('extended string:', extended_string)
-    return int(extended_string, base=2).to_bytes(num_of_bytes, 'little')[::-1]
+def extract_integer_num_of_bytes(bits_str):
+    num_of_full_bytes = len(bits_str) // 8
+    extracted_part_length = num_of_full_bytes * 8
+    return bits_str[:extracted_part_length], bits_str[extracted_part_length:]
 
 
-def count_num_of_bytes(bit_string):
-    length = len(bit_string)
-    if len(bit_string) % 8 == 0:
-        return length // 8
+def to_byte_array(bits_str, *, ending_bit):
+    bits_str_length = len(bits_str)
+    num_of_bytes = _count_num_of_bytes(bits_str_length)
+
+    if not (bits_str_length == num_of_bytes * 8):
+        _extend_to_num_of_bytes(bits_str, num_of_bytes, extending_bit=ending_bit)
+
+    return int(bits_str, base=2).to_bytes(num_of_bytes, 'little')[::-1]
+
+
+def _count_num_of_bytes(bits_list_length):
+    if bits_list_length % 8 == 0:
+        return bits_list_length // 8
     else:
-        return len(bit_string) // 8 + 1
+        return bits_list_length // 8 + 1
 
 
-def extend_to_num_of_bytes(bit_string, num_of_bytes, *, extending_bit):
-    return bit_string + extending_bit * (num_of_bytes * 8 - len(bit_string))
+def _extend_to_num_of_bytes(bits_str, num_of_bytes, *, extending_bit):
+    return bits_str + extending_bit * (num_of_bytes * 8 - len(bits_str))
 
 
 def to_bits(binary_data):
@@ -84,6 +92,10 @@ def get_thread_chunk_delimiter():
 
 def threading_configuration(file_path):
     pass
+
+
+def chunk_file(file_path):
+    return 4, 5215//4
 
 
 def file_length_in_bytes(file_path):
