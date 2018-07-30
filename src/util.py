@@ -95,7 +95,7 @@ def threading_configuration(file_path):
 
 
 def chunk_file(file_path):
-    return 4, 5215//4
+    return 4, (5215 * 1024)//4
 
 
 def file_length_in_bytes(file_path):

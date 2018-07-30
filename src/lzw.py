@@ -9,7 +9,6 @@ _dictionary_length = 8100
 
 def compress(read_file_path, write_path_path):
     num_of_chunks, chunk_size = util.chunk_file(read_file_path)
-
     with open(read_file_path, **file_access_modes.default_read_configuration) as read_stream, \
             open(write_path_path, **file_access_modes.write_bytes_configuration) as write_stream:
 
@@ -19,6 +18,7 @@ def compress(read_file_path, write_path_path):
         initial_phrase = _empty_str
         compression_end = False
         compressed_rest = _empty_str
+
         for chunk_number in range(1, num_of_chunks + 1):
             if chunk_number == num_of_chunks:
                 read_limit = None
@@ -32,21 +32,22 @@ def compress(read_file_path, write_path_path):
             compressed_data = compressed_rest + compressed_data
 
             integer_num_of_bytes, compressed_rest = util.extract_integer_num_of_bytes(compressed_data)
-            byte_array = util.to_byte_array(integer_num_of_bytes, ending_bit=_zero_bit)
-            write_stream.write(byte_array)
 
-        rest_byte_array = util.to_byte_array(compressed_rest, ending_bit=_zero_bit)
-        write_stream.write(rest_byte_array)
+            _write_bytes(write_stream, integer_num_of_bytes)
+
+        _write_bytes(write_stream, compressed_rest)
+
+
+def _write_bytes(write_stream,bits_str):
+    if not (bits_str == _empty_str):
+        byte_array = util.to_byte_array(bits_str, ending_bit=_zero_bit)
+        write_stream.write(byte_array)
 
 
 def _compress_data(data, dictionary, *, initial_phrase, compression_end):
     result = list()
-
     code_length = len(util.to_binary(len(dictionary.keys())))
-    if initial_phrase is None:
-        phrase = _empty_str
-    else:
-        phrase = initial_phrase
+    phrase = initial_phrase
 
     for ch in data:
         phrase += ch
@@ -79,7 +80,7 @@ def decompress(read_file_path, write_path_path):
         reversed_dictionary = util.reverse_dictionary(dictionary)
 
         rest_bits = ''
-        initial_phrase = None
+        initial_phrase = _empty_str
         read_limit = chunk_size
         for chunk_number in range(1, num_of_chunks + 1):
             if chunk_number == num_of_chunks:
@@ -95,22 +96,29 @@ def decompress(read_file_path, write_path_path):
 
 def _decompress_data(bits, dictionary, reversed_dictionary, *, initial_phrase):
     result = list()
-    dictionary_length = len(dictionary.keys())
-    code_length = len(util.to_binary(dictionary_length))
+    code_length = len(util.to_binary(len(dictionary.keys())))
+    # print('dictionary length', len(dictionary.keys()))
+    # print()
     i = 0
 
-    if initial_phrase is None:
+    if initial_phrase == _empty_str:
         chunk = bits[:code_length]
         decompressed_chunk = reversed_dictionary[_remove_leading_zeros(chunk)]
         result.append(decompressed_chunk)
+        # print('chunk', chunk)
+        # print('decompressed chunk', decompressed_chunk)
+        # print()
 
         phrase = decompressed_chunk
 
         i = code_length
-        if _is_power_of_two(dictionary_length):
+        if _is_power_of_two(len(dictionary.keys())):
             code_length += 1
     else:
         phrase = initial_phrase
+
+    # print('dictionary length', len(dictionary.keys()))
+    # print()
 
     while i + code_length <= len(bits):
         chunk = bits[i: i + code_length]
@@ -121,22 +129,25 @@ def _decompress_data(bits, dictionary, reversed_dictionary, *, initial_phrase):
             else:
                 decompressed_chunk = phrase + phrase[0]  # special case
 
+            # print('chunk', chunk)
+            # print('decompressed chunk', decompressed_chunk)
+
             dict_element = phrase + decompressed_chunk[0]
 
             if not (dict_element in dictionary.keys()):
                 result.append(decompressed_chunk)
 
-                dictionary[dict_element] = util.to_binary(dictionary_length)
-                reversed_dictionary[util.to_binary(dictionary_length)] = dict_element
-
-                dictionary_length += 1
+                # print('{} -> {}'.format(dict_element, util.to_binary(len(dictionary.keys()))))
+                # print()
+                dictionary[dict_element] = util.to_binary(len(dictionary.keys()))
+                reversed_dictionary[util.to_binary(len(reversed_dictionary.keys()))] = dict_element
 
                 phrase = decompressed_chunk
             else:
                 phrase += decompressed_chunk
 
             i += code_length
-            if _is_power_of_two(dictionary_length):
+            if _is_power_of_two(len(dictionary.keys())):
                 code_length += 1
         else:
             break

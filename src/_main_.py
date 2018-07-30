@@ -22,11 +22,10 @@ def to_hex(string):
         print(hex(int(chunk, 2)), end='')
 
 
-def tmp():
+def compress_decompress():
     compress()
     decompress()
 
 
 if __name__ == "__main__":
-    # measure_time(tmp)
-    print(''.join(['01', '010', '010', '0100']))
+    measure_time(compress_decompress)

@@ -8,12 +8,12 @@ from test import configuration
 
 
 class TestLZW(unittest.TestCase):
-    _end_of_file = '#'
+    _empty_str = ''
 
-    _wiki_data = 'TOBEORNOTTOBEORTOBEORNOT#'
-    _wiki_bits = '101011000000011001101000010011001111010000010101011011011101011111100100011110100000100010000001'
+    _wiki_data = 'TOBEORNOTTOBEORTOBEORNOT'
+    _wiki_bits = '101000111100010001010111110010001110001111010100011011011101011111100100011110100000100010'
     _wiki_bytes = b'\xac\x06\x68\x4c\xf4\x15\x6d\xd7\xe4\x7a\x08\x80'
-    # 10101 10000 00011 00110 10000 10011 00//1111 010000 010101 011011 011101 011111 100100 011110 100000 100010
+    # 10100 01111 00010 00101 01111 10010 00//1110 001111 010100 011011 011101 011111 100100 011110 100000 100010
     # T     O     B     E     O     R         N     O       T     TO     BE     OR     TOB    EO     RN     OT
 
     _special_case_data = 'ABABABA'
@@ -24,10 +24,10 @@ class TestLZW(unittest.TestCase):
     def test_compress_data_wiki(self):
         data = TestLZW._wiki_data
         dictionary = TestLZW._wiki_dictionary()
-        initial_phrase = ''
+        initial_phrase = TestLZW._empty_str
         compression_end = True
 
-        expected_compression_result = (TestLZW._wiki_bits, '#')
+        expected_compression_result = (TestLZW._wiki_bits, 'OT')
 
         compression_result = lzw._compress_data(data, dictionary, initial_phrase=initial_phrase,
                                                 compression_end=compression_end)
@@ -37,7 +37,7 @@ class TestLZW(unittest.TestCase):
         data = TestLZW._special_case_data
         dictionary = TestLZW._special_case_dictionary()
         expected_compression_result = (TestLZW._special_case_bits, 'ABA')
-        initial_phrase = ''
+        initial_phrase = TestLZW._empty_str
         compression_end = True
         # 01 10 011 101 000
         # 01100111 01000
@@ -52,18 +52,18 @@ class TestLZW(unittest.TestCase):
     @mock.patch('src.lzw._generate_dictionary')
     @mock.patch('util.reverse_dictionary')
     @mock.patch('src.lzw._decompress_data')
-    def test_decompress_data_two_chunks(self,
-                                        mocked_decompress_data,
-                                        mocked_reverse_dictionary,
-                                        mocked_generate_dictionary,
-                                        mocked_chunk_file):
+    def test_decompress_data_2_chunks(self,
+                                      mocked_decompress_data,
+                                      mocked_reverse_dictionary,
+                                      mocked_generate_dictionary,
+                                      mocked_chunk_file):
         bytes_data = TestLZW._wiki_bytes
 
         dictionary = TestLZW._wiki_dictionary()
         reverse_dictionary = TestLZW._wiki_reversed_dictionary()
 
         decompress_data_first_call_result = ('TOBEOR', '00', 'R')
-        decompress_data_second_call_result = ('NOTTOBEORTOBEORNOT', '', 'OT')
+        decompress_data_second_call_result = ('NOTTOBEORTOBEORNOT', TestLZW._empty_str, 'OT')
 
         mocked_chunk_file.return_value = {2, 4}
         mocked_generate_dictionary.return_value = dictionary
@@ -76,7 +76,7 @@ class TestLZW(unittest.TestCase):
                 '10101100000001100110100001001100',
                 dictionary,
                 reverse_dictionary,
-                initial_phrase=None
+                initial_phrase=TestLZW._empty_str
             ),
             mock.call(
                 '00' + '1111010000010101011011011101011111100100011110100000100010' + '000000',
@@ -121,36 +121,37 @@ class TestLZW(unittest.TestCase):
         bits = TestLZW._wiki_bits
         wiki_dictionary = TestLZW._wiki_dictionary()
         wiki_reversed_dictionary = TestLZW._wiki_reversed_dictionary()
-        expected_decompression_result = (TestLZW._wiki_data, '', '#')
+        expected_decompression_result = (TestLZW._wiki_data, TestLZW._empty_str, 'OT')
 
-        decompressed_data = lzw._decompress_data(bits, wiki_dictionary, wiki_reversed_dictionary, initial_phrase=None)
+        decompressed_data = lzw._decompress_data(bits, wiki_dictionary, wiki_reversed_dictionary,
+                                                 initial_phrase=TestLZW._empty_str)
 
         self.assertEqual(expected_decompression_result, decompressed_data)
 
     def test_decompress_special_case_1_chunk(self):
         bits = TestLZW._special_case_bits
-        expected_decompression_result = (TestLZW._special_case_data, '', 'ABA')
+        expected_decompression_result = (TestLZW._special_case_data, TestLZW._empty_str, 'ABA')
 
         special_case_dictionary = TestLZW._special_case_dictionary()
         special_case_reversed_dictionary = TestLZW._special_case_reversed_dictionary()
 
         decompressed_data = lzw._decompress_data(bits, special_case_dictionary, special_case_reversed_dictionary,
-                                                 initial_phrase=None)
+                                                 initial_phrase=TestLZW._empty_str)
 
         self.assertEqual(expected_decompression_result, decompressed_data)
 
     def test_decompress_data_wiki_data_2_chunks(self):
-        # 10101 10000 00011 00110 10000 10011 001111 010000 010//101 011011 011101 011111 100100 011110 100000 100010
-        # T     O     B     E     O     R     N      O          T    TO     BE     OR     TOB    EO     RN     OT
+        # 10100 01111 00010 00101 01111 10010 00//1110 001111 010100 011011 011101 011111 100100 011110 100000 100010
+        #   T     O     B     E     O     R      N      O       T    TO      BE     OR     TOB    EO     RN     OT
 
-        first_chunk = '101011000000011001101000010011001111010000010'
-        expected_first_decompress = 'TOBEORNO'
-        expected_first_bits_rest = '010'
-        expected_first_phrase = 'O'
+        first_chunk = '10100011110001000101011111001000'
+        expected_first_decompress = 'TOBEOR'
+        expected_first_bits_rest = '00'
+        expected_first_phrase = 'R'
 
-        second_chunk = expected_first_bits_rest + '101011011011101011111100100011110100000100010'
-        expected_second_decompress = 'TTOBEORTOBEORNOT'
-        expected_second_bits_rest = ''
+        second_chunk = expected_first_bits_rest + '1110001111010100011011011101011111100100011110100000100010'
+        expected_second_decompress = 'NOTTOBEORTOBEORNOT'
+        expected_second_bits_rest = TestLZW._empty_str
         expected_second_phrase = 'OT'
 
         dictionary = TestLZW._wiki_dictionary()
@@ -160,7 +161,7 @@ class TestLZW(unittest.TestCase):
             first_chunk,
             dictionary,
             reversed_dictionary,
-            initial_phrase=None)
+            initial_phrase=TestLZW._empty_str)
         second_decompress, second_bits_rest, second_phrase = lzw._decompress_data(
             second_chunk,
             dictionary,
@@ -177,14 +178,14 @@ class TestLZW(unittest.TestCase):
 
     @staticmethod
     def _wiki_dictionary():
-        wiki_dictionary = {chr(i + 63): bin(i)[2:] for i in range(2, 28)}
-        wiki_dictionary[TestLZW._end_of_file] = '1'
+        wiki_dictionary = {chr(i + 64): bin(i)[2:] for i in range(1, 27)}
+        wiki_dictionary[-1] = -1
         return wiki_dictionary
 
     @staticmethod
     def _wiki_reversed_dictionary():
-        wiki_reversed_dictionary = {bin(i)[2:]: chr(i + 63) for i in range(2, 28)}
-        wiki_reversed_dictionary['1'] = TestLZW._end_of_file
+        wiki_reversed_dictionary = {bin(i)[2:]: chr(i + 64) for i in range(1, 27)}
+        wiki_reversed_dictionary[-1] = -1
         return wiki_reversed_dictionary
 
     @staticmethod
