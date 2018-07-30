@@ -16,7 +16,7 @@ def compress(read_file_path, write_path_path):
         dictionary = _generate_dictionary()
         read_limit = chunk_size
 
-        initial_phrase = None
+        initial_phrase = _empty_str
         compression_end = False
         compressed_rest = _empty_str
         for chunk_number in range(1, num_of_chunks + 1):
@@ -66,7 +66,6 @@ def _compress_data(data, dictionary, *, initial_phrase, compression_end):
 
     if compression_end:
         result.append(utilities.extend_to_length(dictionary[phrase], code_length))
-        print('last chunk', utilities.extend_to_length(dictionary[phrase], code_length))
 
     return _empty_str.join(result), phrase
 

@@ -28,6 +28,5 @@ def tmp():
 
 
 if __name__ == "__main__":
-    measure_time(tmp)
-    # print(len('00000000000000101110'))
-    # print(len('0000000000000010111'))
+    # measure_time(tmp)
+    print(''.join(['01', '010', '010', '0100']))

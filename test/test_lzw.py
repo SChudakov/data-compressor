@@ -17,26 +17,31 @@ class TestLZW(unittest.TestCase):
 
     # ---------------- test _compress_data --------------
 
-    def test_compress_data_special_case(self):
-        data = 'ABABABA'
-        dictionary = self._special_case_dictionary()
-        expected_compressed_data = ['01', '010', '010', '0100']
-        # 01 10 011 101 000
-        # 01100111 01000
-
-        compressed_data = lzw._compress_data(data, dictionary)
-
-        self.assertEqual(expected_compressed_data, compressed_data)
-
     def test_compress_data_wiki(self):
         data = 'TOBEORNOTTOBEORTOBEORNOT#'
         dictionary = self._wiki_dictionary()
-        expected_compressed_data = ['10101', '10000', '00011', '00110', '10000', '10011', '001111', '010000', '010101',
-                                    '011011', '011101', '011111', '100100', '011110', '100000', '100010', '000001']
+        initial_phrase = ''
+        compression_end = True
 
-        compressed_data = lzw._compress_data(data, dictionary)
+        expected_compression_result = ('1010110000000110011010000100110011110100000' \
+                                      '10101011011011101011111100100011110100000100010000001', '#')
 
-        self.assertEqual(expected_compressed_data, compressed_data)
+        compressed_data = lzw._compress_data(data, dictionary, initial_phrase=initial_phrase,
+                                             compression_end=compression_end)
+        self.assertEqual(expected_compression_result, compressed_data)
+
+    def test_compress_data_special_case(self):
+        data = 'ABABABA'
+        dictionary = self._special_case_dictionary()
+        expected_compression_result = ('010100100100', 'ABA')
+        initial_phrase = ''
+        compression_end = True
+        # 01 10 011 101 000
+        # 01100111 01000
+
+        compression_result = lzw._compress_data(data, dictionary, initial_phrase=initial_phrase,
+                                                compression_end=compression_end)
+        self.assertEqual(expected_compression_result, compression_result)
 
     # ---------------- test decompress --------------
 
@@ -114,15 +119,15 @@ class TestLZW(unittest.TestCase):
         bits = '101011000000011001101000010011001111010000010101011011011101011111100100011110100000100010000001'
         wiki_dictionary = self._wiki_dictionary()
         wiki_reversed_dictionary = self._wiki_reversed_dictionary()
-        expected_decompressed_result = ('TOBEORNOTTOBEORTOBEORNOT#', '')
+        expected_decompression_result = ('TOBEORNOTTOBEORTOBEORNOT#', '', '#')
 
         decompressed_data = lzw._decompress_data(bits, wiki_dictionary, wiki_reversed_dictionary, initial_phrase=None)
 
-        self.assertEqual(expected_decompressed_result, decompressed_data)
+        self.assertEqual(expected_decompression_result, decompressed_data)
 
     def test_decompress_special_case_1_chunk(self):
         bits = '010100100100'
-        expected_decompressed_result = ('ABABABA', '')
+        expected_decompression_result = ('ABABABA', '', 'ABA')
 
         special_case_dictionary = self._special_case_dictionary()
         special_case_reversed_dictionary = self._special_case_reversed_dictionary()
@@ -130,7 +135,7 @@ class TestLZW(unittest.TestCase):
         decompressed_data = lzw._decompress_data(bits, special_case_dictionary, special_case_reversed_dictionary,
                                                  initial_phrase=None)
 
-        self.assertEqual(expected_decompressed_result, decompressed_data)
+        self.assertEqual(expected_decompression_result, decompressed_data)
 
     def test_decompress_data_wiki_data_2_chunks(self):
         # 10101 10000 00011 00110 10000 10011 001111 010000 010//101 011011 011101 011111 100100 011110 100000 100010
