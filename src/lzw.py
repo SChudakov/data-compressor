@@ -35,6 +35,9 @@ def compress(read_file_path, write_path_path):
             byte_array = utilities.to_byte_array(integer_num_of_bytes, ending_bit=_zero_bit)
             write_stream.write(byte_array)
 
+        rest_byte_array = utilities.to_byte_array(compressed_rest, ending_bit=_zero_bit)
+        write_stream.write(rest_byte_array)
+
 
 def _compress_data(data, dictionary, *, initial_phrase, compression_end):
     result = list()
@@ -63,6 +66,7 @@ def _compress_data(data, dictionary, *, initial_phrase, compression_end):
 
     if compression_end:
         result.append(utilities.extend_to_length(dictionary[phrase], code_length))
+        print('last chunk', utilities.extend_to_length(dictionary[phrase], code_length))
 
     return _empty_str.join(result), phrase
 
@@ -94,6 +98,7 @@ def _decompress_data(bits, dictionary, reversed_dictionary, *, initial_phrase):
     result = list()
     dictionary_length = len(dictionary.keys())
     code_length = len(utilities.to_binary(dictionary_length))
+    i = 0
 
     if initial_phrase is None:
         chunk = bits[:code_length]
@@ -107,7 +112,6 @@ def _decompress_data(bits, dictionary, reversed_dictionary, *, initial_phrase):
             code_length += 1
     else:
         phrase = initial_phrase
-        i = 0
 
     while i + code_length <= len(bits):
         chunk = bits[i: i + code_length]
@@ -136,9 +140,7 @@ def _decompress_data(bits, dictionary, reversed_dictionary, *, initial_phrase):
             if _is_power_of_two(dictionary_length):
                 code_length += 1
         else:
-            print('break')
             break
-
 
     joined_result = _empty_str.join(result)
     rest_bits = bits[i:]

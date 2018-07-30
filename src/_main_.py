@@ -24,8 +24,10 @@ def to_hex(string):
 
 def tmp():
     compress()
-    # decompress()
+    decompress()
 
 
 if __name__ == "__main__":
     measure_time(tmp)
+    # print(len('00000000000000101110'))
+    # print(len('0000000000000010111'))
