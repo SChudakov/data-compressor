@@ -1,9 +1,9 @@
 import unittest
 
-from src import elias_code_functions, utilities
+from src import elias_code_functions, util
 
 
-class TestUtilities(unittest.TestCase):
+class TestUtil(unittest.TestCase):
 
 
     def test_wiki_binary_string(self):
@@ -16,7 +16,7 @@ class TestUtilities(unittest.TestCase):
         #              ' 01101101 11010111 11100100 01111010 00001000 10000000'
         # code_nums = '163 196 87 200 227 212 109 215 228 122 8 128'
 
-        binary_data = utilities.to_byte_array(compressed_data, ending_bit='0')
+        binary_data = util.to_byte_array(compressed_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 
@@ -25,7 +25,7 @@ class TestUtilities(unittest.TestCase):
         expected_bits = '101000111100010001010111110010001110001111010100' \
                         '011011011101011111100100011110100000100010000000'
 
-        bits = utilities.to_bits(binary_data)
+        bits = util.to_bits(binary_data)
 
         self.assertEqual(expected_bits, bits)
 
@@ -33,7 +33,7 @@ class TestUtilities(unittest.TestCase):
         compressed_data = '0110011101000'
         expected_binary_data = b'\x67\x40'
 
-        binary_data = utilities.to_byte_array(compressed_data, ending_bit='0')
+        binary_data = util.to_byte_array(compressed_data, ending_bit='0')
 
         self.assertEqual(expected_binary_data, binary_data)
 
@@ -41,7 +41,7 @@ class TestUtilities(unittest.TestCase):
         binary_data = b'\x67\x40'
         expected_bits = '0110011101000000'
 
-        bits = utilities.to_bits(binary_data)
+        bits = util.to_bits(binary_data)
 
         self.assertEqual(expected_bits, bits)
 
@@ -49,7 +49,7 @@ class TestUtilities(unittest.TestCase):
         data = "ABBCCCDDDD"
         expected_frequencies = {'D': 4, 'C': 3, 'B': 2, 'A': 1}
 
-        frequencies = utilities.characters_frequencies(data)
+        frequencies = util.characters_frequencies(data)
 
         self.assertEqual(expected_frequencies, frequencies)
 
@@ -57,7 +57,7 @@ class TestUtilities(unittest.TestCase):
         data = "TOBEORNOTTOBEORTOBEORNOT"
         expected_frequencies = {'O': 8, 'T': 5, 'B': 3, 'E': 3, 'R': 3, 'N': 2}
 
-        frequencies = utilities.characters_frequencies(data)
+        frequencies = util.characters_frequencies(data)
 
         self.assertEqual(expected_frequencies, frequencies)
 
@@ -65,7 +65,7 @@ class TestUtilities(unittest.TestCase):
         characters_by_frequency = 'DCBA'
         expected_codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
 
-        codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
+        codes = util.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
 
@@ -73,7 +73,7 @@ class TestUtilities(unittest.TestCase):
         characters_by_frequency = 'OTBERN'
         expected_codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
 
-        codes = utilities.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
+        codes = util.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
 
         self.assertEqual(expected_codes, codes)
 
@@ -82,9 +82,9 @@ class TestUtilities(unittest.TestCase):
         expected_second = r'file_name_thread_2.epub'
         expected_third = r'D:\workspace.python\data-compresor\files\100_mb_file_thread_3.txt'
 
-        first = utilities.thread_result_file_path(r'file_name.txt', 1)
-        second = utilities.thread_result_file_path(r'file_name.epub', 2)
-        third = utilities.thread_result_file_path(r'D:\workspace.python\data-compresor\files\100_mb_file.txt', 3)
+        first = util.thread_result_file_path(r'file_name.txt', 1)
+        second = util.thread_result_file_path(r'file_name.epub', 2)
+        third = util.thread_result_file_path(r'D:\workspace.python\data-compresor\files\100_mb_file.txt', 3)
 
         self.assertEqual(expected_first, first)
         self.assertEqual(expected_second, second)

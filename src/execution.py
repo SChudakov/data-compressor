@@ -3,7 +3,7 @@ from schema import Schema, Or, Use
 import characters_distribution
 import elias
 import lzw
-import utilities
+import util
 
 _compress_command = 'compress'
 _decompress_command = 'decompress'
@@ -111,7 +111,7 @@ def _enrich_arguments(arguments):
         else:
             command = _decompress_command
 
-        write_file_value = utilities.default_write_file_path(read_file_value, command)
+        write_file_value = util.default_write_file_path(read_file_value, command)
         write_file_value_changed = True
 
     if not elias_value and not lzw_value:

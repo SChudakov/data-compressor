@@ -7,7 +7,7 @@ import threading
 import elias_code_functions
 import file_access_modes
 import kullback_leiber
-import utilities
+import util
 
 
 def code_type(file_path,*, distribution_divergence):
@@ -128,14 +128,14 @@ def _generate_omega_code_distribution(num_of_chars):
 
 
 def _map_reduce_count(read_stream_path):
-    num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
+    num_of_threads, thread_chunk = util.threading_configuration(read_stream_path)
 
     mapper_threads = list()
     mapper_result_files = list()
     for thread_number in range(1, num_of_threads + 1):
 
         read_stream_start_position = thread_chunk * (thread_number - 1)
-        thread_result_file_path = utilities.thread_result_file_path(read_stream_path, thread_number, task_mark='distr')
+        thread_result_file_path = util.thread_result_file_path(read_stream_path, thread_number, task_mark='distr')
 
         if thread_number == num_of_threads:
             read_limit = None
@@ -234,7 +234,7 @@ def _reducer(character_values_tuple, reduced_results):
 
 
 def _high_performance_count(read_stream_path):
-    num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
+    num_of_threads, thread_chunk = util.threading_configuration(read_stream_path)
 
     threads = list()
     threads_result_dicts = queue.Queue()

@@ -48,9 +48,9 @@ class TestLZW(unittest.TestCase):
 
     # ---------------- test decompress --------------
 
-    @mock.patch('utilities.chunk_file')
+    @mock.patch('util.chunk_file')
     @mock.patch('src.lzw._generate_dictionary')
-    @mock.patch('utilities.reverse_dictionary')
+    @mock.patch('util.reverse_dictionary')
     @mock.patch('src.lzw._decompress_data')
     def test_decompress_data_two_chunks(self,
                                         mocked_decompress_data,

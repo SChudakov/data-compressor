@@ -5,7 +5,7 @@ import unittest
 
 import mock
 
-from src import elias_code_functions, elias, utilities
+from src import elias_code_functions, elias, util
 from test import configuration
 
 
@@ -19,7 +19,7 @@ class EliasTest(unittest.TestCase):
     def setUp(self):
         mocked_get_characters_by_frequency_delimiter = mock.Mock('utilities.get_characters_by_frequency_delimiter')
         mocked_get_characters_by_frequency_delimiter.return_value = self.test_delimiter
-        utilities.get_characters_by_frequency_delimiter = mocked_get_characters_by_frequency_delimiter
+        util.get_characters_by_frequency_delimiter = mocked_get_characters_by_frequency_delimiter
 
     # ---------------- test compress --------------
 
@@ -393,10 +393,10 @@ class EliasTest(unittest.TestCase):
         codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
         mocked_generate_codes.return_value = codes
 
-        utilities.threading_configuration = mocked_threading_configuration
+        util.threading_configuration = mocked_threading_configuration
         elias._combine_threads_results = mocked_combine_threading_results
-        utilities.thread_result_file_path = mocked_thread_result_file_path
-        utilities.generate_codes = mocked_generate_codes
+        util.thread_result_file_path = mocked_thread_result_file_path
+        util.generate_codes = mocked_generate_codes
 
         read_stream_path = configuration.test_file_path('hyper_threaded_gamma_wiki.txt')
         # since _combine_threading_results is mocked this file

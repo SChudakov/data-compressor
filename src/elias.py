@@ -4,7 +4,7 @@ import threading
 
 import elias_code_functions
 import file_access_modes
-import utilities
+import util
 
 gamma_code_ending_bit = '0'
 delta_code_ending_bit = '0'
@@ -26,7 +26,7 @@ def _sequential_compress(read_stream_path, write_stream_path, *, code_function, 
 
 
 def _hyper_threaded_compress(read_stream_path, write_stream_path, *, code_function, ending_bit):
-    num_of_threads, thread_chunk = utilities.threading_configuration(read_stream_path)
+    num_of_threads, thread_chunk = util.threading_configuration(read_stream_path)
 
     results_queue = queue.PriorityQueue()
     threads = list()
@@ -34,7 +34,7 @@ def _hyper_threaded_compress(read_stream_path, write_stream_path, *, code_functi
     for thread_number in range(1, num_of_threads + 1):
 
         read_stream_start_position = thread_chunk * (thread_number - 1)
-        thread_result_file_path = utilities.thread_result_file_path(write_stream_path, thread_number)
+        thread_result_file_path = util.thread_result_file_path(write_stream_path, thread_number)
 
         if thread_number == num_of_threads:
             read_limit = None
@@ -99,16 +99,16 @@ def _compress_file_content(read_stream_path, write_stream_path, threading_data=N
 
         data = read_stream.read(read_limit)
 
-        characters_frequencies = utilities.characters_frequencies(data)
-        characters_by_frequency = utilities.to_characters_by_frequencies(characters_frequencies)
+        characters_frequencies = util.characters_frequencies(data)
+        characters_by_frequency = util.to_characters_by_frequencies(characters_frequencies)
 
-        codes = utilities.generate_codes(characters_by_frequency, code_function)
+        codes = util.generate_codes(characters_by_frequency, code_function)
 
         compressed_data = _compress_data(data, codes)
-        byte_array = utilities.to_byte_array(compressed_data, ending_bit=ending_bit)
+        byte_array = util.to_byte_array(compressed_data, ending_bit=ending_bit)
 
         write_stream.write(bytearray(characters_by_frequency, encoding=file_access_modes.default_file_encoding))
-        write_stream.write(utilities.get_characters_by_frequency_delimiter())
+        write_stream.write(util.get_characters_by_frequency_delimiter())
         write_stream.write(byte_array)
 
         if not (threading_data is None):
@@ -137,7 +137,7 @@ def decompress(read_stream_path, write_stream_path, *, code_type, high_performan
         write_stream = open(write_stream_path, **file_access_modes.default_write_configuration)
 
         characters_by_frequency_binary, binary_data = \
-            read_stream.read().split(utilities.get_characters_by_frequency_delimiter())
+            read_stream.read().split(util.get_characters_by_frequency_delimiter())
         characters_by_frequency = characters_by_frequency_binary.decode(
             encoding=file_access_modes.default_file_encoding)
 
@@ -145,9 +145,9 @@ def decompress(read_stream_path, write_stream_path, *, code_type, high_performan
         ending_bit = _get_ending_bit(code_type)
         read_code_function = _get_read_code_function(code_type)
 
-        codes = utilities.generate_codes(characters_by_frequency, code_function)
-        reversed_codes = utilities.reverse_dictionary(codes)
-        bits = utilities.to_bits(binary_data)
+        codes = util.generate_codes(characters_by_frequency, code_function)
+        reversed_codes = util.reverse_dictionary(codes)
+        bits = util.to_bits(binary_data)
         # print('characters by frequency:', characters_by_frequency)
         # print('binary data:', binary_data)
 
