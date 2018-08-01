@@ -1,7 +1,10 @@
+import os
+
 from schema import Schema, Or, Use
 
 import characters_distribution
 import elias
+import file_access_modes
 import lzw
 import util
 
@@ -15,14 +18,13 @@ _lzw_option = '--lzw'
 _elias_option = '--elias'
 _divergence_option = '--divergence'
 _code_option = '--code'
-_high_performance_option = '--hp'
 
 _gamma_code_type = 'gamma'
 _delta_code_type = 'delta'
 _omega_code_type = 'omega'
 
 _read_file_error = 'read_file should exist and be readable'
-_write_file_error = 'write_file must be readable'
+_write_file_error = 'write_file must be writable'
 _divergence_error = 'divergence must be a float number'
 _elias_code_error = 'elias code type should be gamma, delta, or omega'
 
@@ -51,26 +53,23 @@ def execute(arguments):
     elias_value = arguments[_elias_option]
 
     code_value = arguments[_code_option]
-    high_performance_value = arguments[_high_performance_option]
 
     if compress_value:
         if lzw_value:
             lzw.compress(read_file_value, write_file_value)
         elif elias_value:
-            elias.compress(read_file_value, write_file_value, code_type=code_value,
-                           high_performance=high_performance_value)
+            elias.compress(read_file_value, write_file_value, code_type=code_value)
     else:
         if lzw_value:
             lzw.decompress(read_file_value, write_file_value)
         elif elias_value:
-            elias.decompress(read_file_value, write_file_value, code_type=code_value,
-                             high_performance=high_performance_value)
+            elias.decompress(read_file_value, write_file_value, code_type=code_value)
 
 
 def _validate_arguments(arguments):
     schema = Schema({
-        _read_file_parameter: Use(_validate_read_file, error=_read_file_error),
-        _write_file_parameter: Or(None, Use(_validate_write_file, error=_write_file_error)),
+        _read_file_parameter: Use(_validate_read_file_path, error=_read_file_error),
+        _write_file_parameter: Or(None, Use(_validate_write_file_path, error=_write_file_error)),
         _divergence_option: Or(None, Use(float, error=_divergence_error)),
         _code_option: Or(None, _gamma_code_type, _delta_code_type, _omega_code_type, error=_elias_code_error),
         str: object
@@ -78,15 +77,23 @@ def _validate_arguments(arguments):
     schema.validate(arguments)
 
 
-def _validate_read_file(file):
-    with open(file, 'r'):
-        pass
+def _validate_read_file_path(file_path):
+    read_stream = None
+    try:
+        read_stream = open(file_path, **file_access_modes.default_read_configuration)
+    finally:
+        if not(read_stream is None):
+            read_stream.close()
 
 
-def _validate_write_file(file):
-    with open(file, 'w'):
-        pass
-
+def _validate_write_file_path(file_path):
+    write_stream = None
+    try:
+        write_stream = open(file_path, **file_access_modes.default_write_configuration)
+    finally:
+        if not(write_stream is None):
+            write_stream.close()
+        os.remove(file_path)
 
 def _enrich_arguments(arguments):
     compress_value = arguments[_compress_command]

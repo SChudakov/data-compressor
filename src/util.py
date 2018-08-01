@@ -55,7 +55,7 @@ def to_byte_array(bits_str, *, ending_bit):
     num_of_bytes = _count_num_of_bytes(bits_str_length)
 
     if not (bits_str_length == num_of_bytes * 8):
-        _extend_to_num_of_bytes(bits_str, num_of_bytes, extending_bit=ending_bit)
+        bits_str = _extend_to_num_of_bytes(bits_str, num_of_bytes, extending_bit=ending_bit)
 
     return int(bits_str, base=2).to_bytes(num_of_bytes, 'little')[::-1]
 
@@ -82,20 +82,12 @@ def to_binary(number):
     return bin(number)[2:]
 
 
-def get_characters_by_frequency_delimiter():
-    return b'\x00'
-
-
-def get_thread_chunk_delimiter():
-    return b'\x01'
-
-
-def threading_configuration(file_path):
-    pass
+characters_by_frequency_delimiter = b'\x00'
+thread_chunk_delimiter = b'\x01'
 
 
 def chunk_file(file_path):
-    return 4, (5215 * 1024)//4
+    return 4, (5215 * 1024) // 4
 
 
 def file_length_in_bytes(file_path):

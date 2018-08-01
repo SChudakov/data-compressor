@@ -18,7 +18,6 @@ def compress(read_file_path, write_path_path):
         initial_phrase = _empty_str
         compression_end = False
         compressed_rest = _empty_str
-
         for chunk_number in range(1, num_of_chunks + 1):
             if chunk_number == num_of_chunks:
                 read_limit = None
@@ -79,7 +78,7 @@ def decompress(read_file_path, write_path_path):
         dictionary = _generate_dictionary()
         reversed_dictionary = util.reverse_dictionary(dictionary)
 
-        rest_bits = ''
+        rest_bits = _empty_str
         initial_phrase = _empty_str
         read_limit = chunk_size
         for chunk_number in range(1, num_of_chunks + 1):

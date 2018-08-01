@@ -5,86 +5,164 @@ import unittest
 
 import mock
 
-from src import elias_code_functions, elias, util
+import elias
+import util
 from test import configuration
 
 
-class EliasTest(unittest.TestCase):
-    gamma_code_function = elias_code_functions.gamma_code
-    delta_code_function = elias_code_functions.delta_code
-    omega_code_function = elias_code_functions.omega_code
+class TestElias(unittest.TestCase):
+    _test_delimiter = b'|'
 
-    test_delimiter = b'|'
+    _threading_data_parameter = elias._threading_data_parameter
+    _code_function_parameter = elias._code_function_parameter
+    _ending_bit_parameter = elias._ending_bit_parameter
+
+    _gamma_code_function = elias._gamma_code
+    _delta_code_function = elias._delta_code
+    _omega_code_function = elias._omega_code
+
+    _gamma_code_ending_bit = elias._gamma_ending_bit
+    _delta_code_ending_bit = elias._delta_ending_bit
+    _omega_code_ending_bit = elias._omega_ending_bit
+
+    _read_gamma_code = elias._read_gamma_code
+    _read_delta_code = elias._read_delta_code
+    _read_omega_code = elias._read_omega_code
 
     def setUp(self):
-        mocked_get_characters_by_frequency_delimiter = mock.Mock('utilities.get_characters_by_frequency_delimiter')
-        mocked_get_characters_by_frequency_delimiter.return_value = self.test_delimiter
-        util.get_characters_by_frequency_delimiter = mocked_get_characters_by_frequency_delimiter
+        util.characters_by_frequency_delimiter = TestElias._test_delimiter
 
     # ---------------- test compress --------------
 
-    @mock.patch('src.elias._get_code_function')
-    @mock.patch('src.elias._get_ending_bit')
-    @mock.patch('src.elias._sequential_compress')
-    def test_compress_sequential_1(self,
-                                   mocked_sequential_compress,
-                                   mocked_get_ending_bit,
-                                   mocked_get_code_function):
-        mocked_get_code_function.return_value = elias_code_functions.gamma_code
-        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
-
-        read_stream_path = configuration.test_file_path('read stream path')
-        write_stream_path = configuration.test_file_path('write stream path')
+    @mock.patch('util.chunk_file')
+    @mock.patch('elias._compress_file_content')
+    @mock.patch('queue.PriorityQueue')
+    @mock.patch('util.thread_result_file_path')
+    @mock.patch('elias._combine_threads_results')
+    def test_compress_1_chunk(self,
+                              mocked_combine_threading_results,
+                              mocked_thread_result_file_path,
+                              mocked_priority_queue,
+                              mocked_compress_file_content,
+                              mocked_chunk_file):
+        read_file_path = configuration.test_file_path('compress_1_chunk')
+        write_file_path = configuration.test_file_path('compress_1_chunk_compressed')
         code_type = 'gamma'
-        hyper_threaded = False
 
-        expected_code_type_parameter_value = code_type
-        expected_read_stream_path_parameter_value = read_stream_path
-        expected_write_stream_path_parameter_value = write_stream_path
-        expected_code_function_parameter_value = elias_code_functions.gamma_code
-        expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
+        num_of_chunks = 1
+        chunk_size = 0
 
-        elias.compress(read_stream_path, write_stream_path, code_type=code_type, high_performance=hyper_threaded)
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
+        mocked_thread_result_file_path.return_value = write_file_path
 
-        mocked_get_code_function.assert_called_once_with(expected_code_type_parameter_value)
-        mocked_get_ending_bit.assert_called_once_with(expected_code_type_parameter_value)
-        mocked_sequential_compress.assert_called_once_with(
-            expected_read_stream_path_parameter_value,
+        expected_read_stream_path_parameter_value = read_file_path
+        expected_write_stream_path_parameter_value = write_file_path
+        expected_thread_number_parameter_value = 1
+        expected_read_stream_start_position = 0
+        expected_read_limit = None
+        expected_threading_data_parameter_value = (mocked_priority_queue.return_value,
+                                                   expected_thread_number_parameter_value,
+                                                   expected_read_stream_start_position,
+                                                   expected_read_limit)
+        expected_code_function_parameter_value = TestElias._gamma_code_function
+        expected_ending_bit_parameter_value = TestElias._gamma_code_ending_bit
+
+        elias.compress(read_file_path, write_file_path, code_type=code_type)
+
+        mocked_thread_result_file_path.assert_called_once_with(
             expected_write_stream_path_parameter_value,
-            **{'code_function': expected_code_function_parameter_value,
-               'ending_bit': expected_ending_bit_parameter_value}
+            expected_thread_number_parameter_value
+        )
+        mocked_compress_file_content.assert_has_calls(
+            [
+                mock.call(expected_read_stream_path_parameter_value,
+                          expected_write_stream_path_parameter_value,
+                          threading_data=expected_threading_data_parameter_value,
+                          code_function=expected_code_function_parameter_value,
+                          ending_bit=expected_ending_bit_parameter_value)
+            ]
+        )
+        mocked_combine_threading_results.assert_called_once_with(
+            mocked_priority_queue.return_value,
+            expected_write_stream_path_parameter_value,
+            num_of_chunks
         )
 
-    @mock.patch('src.elias._get_code_function')
-    @mock.patch('src.elias._get_ending_bit')
-    @mock.patch('src.elias._hyper_threaded_compress')
-    def test_compress_sequential_2(self,
-                                   mocked_hyper_threaded_compress,
-                                   mocked_get_ending_bit,
-                                   mocked_get_code_function):
-        mocked_get_code_function.return_value = elias_code_functions.gamma_code
-        mocked_get_ending_bit.return_value = elias.gamma_code_ending_bit
+    @mock.patch('util.chunk_file')
+    @mock.patch('elias._compress_file_content')
+    @mock.patch('queue.PriorityQueue')
+    @mock.patch('util.thread_result_file_path')
+    @mock.patch('elias._combine_threads_results')
+    def test_compress_3_chunks(self,
+                               mocked_combine_threading_results,
+                               mocked_thread_result_file_path,
+                               mocked_priority_queue,
+                               mocked_compress_file_content,
+                               mocked_chunk_file):
 
-        read_stream_path = configuration.test_file_path('read stream path')
-        write_stream_path = configuration.test_file_path('write stream path')
+        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple.txt')
+        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple_compress.txt')
         code_type = 'gamma'
-        hyper_threaded = True
 
-        expected_code_type_parameter_value = code_type
-        expected_read_stream_path_parameter_value = read_stream_path
-        expected_write_stream_path_parameter_value = write_stream_path
-        expected_code_function_parameter_value = elias_code_functions.gamma_code
-        expected_ending_bit_parameter_value = elias.gamma_code_ending_bit
+        thread_1_result_file_path = configuration.test_file_path('hyper_threaded_gamma_simple_thread_1.txt')
+        thread_2_result_file_path = configuration.test_file_path('hyper_threaded_gamma_simple_thread_2.txt')
+        thread_3_result_file_path = configuration.test_file_path('hyper_threaded_gamma_simple_thread_3.txt')
+        thread_1_number = 1
+        thread_2_number = 2
+        thread_3_number = 3
+        thread_1_start_position = 0
+        thread_2_start_position = 3
+        thread_3_start_position = 6
+        thread_1_read_limit = 3
+        thread_2_read_limit = 3
+        thread_3_read_limit = None
+        thread_1_threading_configuration = (mocked_priority_queue.return_value,
+                                            thread_1_number,
+                                            thread_1_start_position,
+                                            thread_1_read_limit)
+        thread_2_threading_configuration = (mocked_priority_queue.return_value,
+                                            thread_2_number,
+                                            thread_2_start_position,
+                                            thread_2_read_limit)
+        thread_3_threading_configuration = (mocked_priority_queue.return_value,
+                                            thread_3_number,
+                                            thread_3_start_position,
+                                            thread_3_read_limit)
 
-        elias.compress(read_stream_path, write_stream_path, code_type=code_type, high_performance=hyper_threaded)
+        num_of_chunks = 3
+        thread_chunk = 3
 
-        mocked_get_code_function.assert_called_once_with(expected_code_type_parameter_value)
-        mocked_get_ending_bit.assert_called_once_with(expected_code_type_parameter_value)
-        mocked_hyper_threaded_compress.assert_called_once_with(
-            expected_read_stream_path_parameter_value,
-            expected_write_stream_path_parameter_value,
-            **{'code_function': expected_code_function_parameter_value,
-               'ending_bit': expected_ending_bit_parameter_value}
+        mocked_chunk_file.return_value = (num_of_chunks, thread_chunk)
+        mocked_thread_result_file_path.side_effect = [thread_1_result_file_path,
+                                                      thread_2_result_file_path,
+                                                      thread_3_result_file_path]
+
+        expected_code_function_parameter_value = TestElias._gamma_code_function
+        expected_ending_bit_parameter_value = TestElias._gamma_code_ending_bit
+
+        elias.compress(read_stream_path, write_stream_path, code_type=code_type)
+
+        mocked_compress_file_content.assert_has_calls([
+            mock.call(read_stream_path,
+                      thread_1_result_file_path,
+                      threading_data=thread_1_threading_configuration,
+                      code_function=expected_code_function_parameter_value,
+                      ending_bit=expected_ending_bit_parameter_value),
+            mock.call(read_stream_path,
+                      thread_2_result_file_path,
+                      threading_data=thread_2_threading_configuration,
+                      code_function=expected_code_function_parameter_value,
+                      ending_bit=expected_ending_bit_parameter_value),
+            mock.call(read_stream_path,
+                      thread_3_result_file_path,
+                      threading_data=thread_3_threading_configuration,
+                      code_function=expected_code_function_parameter_value,
+                      ending_bit=expected_ending_bit_parameter_value)
+        ], any_order=True)
+        mocked_combine_threading_results.assert_called_once_with(
+            mocked_priority_queue.return_value,
+            write_stream_path,
+            num_of_chunks
         )
 
     # ---------------- test _combine_threads_results --------
@@ -165,277 +243,12 @@ class EliasTest(unittest.TestCase):
             # combined_results_file, is should be deleted afterwards
             os.remove(combined_results_file)
 
-    # ---------------- test _hyper_threaded_compress --------------
-
-    @mock.patch('src.utilities.threading_configuration')
-    @mock.patch('src.utilities.thread_result_file_path')
-    @mock.patch('src.elias._combine_threads_results', mock.Mock())
-    def test_hyper_threaded_compress_simple_1_thread_results_file_content(self,
-                                                                        mocked_thread_result_file_path,
-                                                                        mocked_threading_configuration):
-        data = "ABBCCCDDDD"
-
-        expected_thread_1_compressed_data = b'BA' + self.test_delimiter + b'\x58'
-        # ABB
-        # A : 1 : 2 : 1
-        # B : 2 : 1 : 010
-        # 010 1 1
-        # 01011000
-        # 58
-
-        expected_thread_2_compressed_data = b'C' + self.test_delimiter + b'\xE0'
-        # CCC
-        # C : 1 : 1 : 1
-        # 1 1 1
-        # 11100000
-        # E0
-
-        expected_thread_3_compressed_data = b'D' + self.test_delimiter + b'\xF0'
-        # DDDD
-        # C : 1 : 1 : 1
-        # 1 1 1 1
-        # 11110000
-        # F0
-
-        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_1.txt')
-        thread_2_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_2.txt')
-        thread_3_result_file = configuration.test_file_path('hyper_threaded_gamma_simple_thread_3.txt')
-
-        num_of_threads = 3
-        thread_chunk = 3
-
-        mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
-        mocked_thread_result_file_path.side_effect = [thread_1_result_file,
-                                                      thread_2_result_file,
-                                                      thread_3_result_file]
-
-        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple.txt')
-        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_simple_compress.txt')
-
-        initializing_stream = None
-        thread_1_check_stream = None
-        thread_2_check_stream = None
-        thread_3_check_stream = None
-
-        try:
-            initializing_stream = open(read_stream_path, 'w')
-            initializing_stream.write(data)
-            initializing_stream.close()
-
-            elias._hyper_threaded_compress(read_stream_path, write_stream_path,
-                                           code_function=elias_code_functions.gamma_code,
-                                           ending_bit=elias.gamma_code_ending_bit)
-
-            thread_1_check_stream = open(thread_1_result_file, 'rb')
-            thread_2_check_stream = open(thread_2_result_file, 'rb')
-            thread_3_check_stream = open(thread_3_result_file, 'rb')
-
-            thread_1_compressed_data = thread_1_check_stream.read()
-            thread_2_compressed_data = thread_2_check_stream.read()
-            thread_3_compressed_data = thread_3_check_stream.read()
-
-            thread_1_check_stream.close()
-            thread_2_check_stream.close()
-            thread_3_check_stream.close()
-
-            self.assertEqual(expected_thread_1_compressed_data, thread_1_compressed_data)
-            self.assertEqual(expected_thread_2_compressed_data, thread_2_compressed_data)
-            self.assertEqual(expected_thread_3_compressed_data, thread_3_compressed_data)
-
-        finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
-                initializing_stream.close()
-
-            if not (thread_1_check_stream is None) and not thread_1_check_stream.closed:
-                thread_1_check_stream.close()
-
-            if not (thread_2_check_stream is None) and not thread_2_check_stream.closed:
-                thread_2_check_stream.close()
-
-            if not (thread_3_check_stream is None) and not thread_3_check_stream.closed:
-                thread_3_check_stream.close()
-
-            os.remove(read_stream_path)
-            os.remove(thread_1_result_file)
-            os.remove(thread_3_result_file)
-            os.remove(thread_2_result_file)
-
-    @mock.patch('src.utilities.threading_configuration')
-    @mock.patch('src.utilities.thread_result_file_path')
-    @mock.patch('src.elias._combine_threads_results', mock.Mock())
-    def test_hyper_threaded_compress_TBER_3_thread_results_file_content(self,
-                                                                      mocked_thread_result_file_path,
-                                                                      mocked_threading_configuration):
-        data = "RRRREEEBBTTRREBRBEERERBBTRERER"
-
-        expected_thread_1_compressed_data = b'REBT' + self.test_delimiter + b'\xF4\x93\x64'
-        # RRRREEEBBT
-        # T : 1 : 4 : 00100
-        # B : 2 : 3 : 011
-        # E : 3 : 2 : 010
-        # R : 4 : 1 : 1
-        # 1 1 1 1  010 010 010 011 011 00100
-        # 11110100 10010011 01100100
-        # F4       93       64
-
-        expected_thread_2_compressed_data = b'REBT' + self.test_delimiter + b'\x26\x9D\xA5'
-        # TRREBRBEER
-        # T : 1 : 4 : 00100
-        # B : 2 : 3 : 011
-        # E : 3 : 2 : 010
-        # R : 4 : 1 : 1
-        # 00100 1 1 010 011 1 011 010 010 1
-        # 00100110 10011101 10100101
-        # 26       9D       A5
-
-        expected_thread_3_compressed_data = b'REBT' + self.test_delimiter + b'\x56\xC9\x55'
-        # ERBBTRERER
-        # T : 1 : 4 : 00100
-        # B : 2 : 3 : 011
-        # E : 3 : 2 : 010
-        # R : 4 : 1 : 1
-        # 010 1 011 011 00100 1 010 1 010 1
-        # 01010110 11001001 01010101
-        # 56       C9       55
-
-        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_1.txt')
-        thread_2_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_2.txt')
-        thread_3_result_file = configuration.test_file_path('hyper_threaded_gamma_TBER_thread_3.txt')
-
-        num_of_thread = 3
-        thread_chunk = 10
-
-        mocked_threading_configuration.return_value = (num_of_thread, thread_chunk)
-        mocked_thread_result_file_path.side_effect = [thread_1_result_file,
-                                                      thread_2_result_file,
-                                                      thread_3_result_file]
-
-        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_TBER.txt')
-        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_TBER_compressed.txt')
-
-        initializing_stream = None
-        thread_1_check_stream = None
-        thread_2_check_stream = None
-        thread_3_check_stream = None
-
-        try:
-            initializing_stream = open(read_stream_path, 'w')
-            initializing_stream.write(data)
-            initializing_stream.close()
-
-            elias._hyper_threaded_compress(read_stream_path, write_stream_path,
-                                           code_function=elias_code_functions.gamma_code,
-                                           ending_bit=elias.gamma_code_ending_bit)
-
-            thread_1_check_stream = open(thread_1_result_file, 'rb')
-            thread_2_check_stream = open(thread_2_result_file, 'rb')
-            thread_3_check_stream = open(thread_3_result_file, 'rb')
-
-            thread_1_compressed_data = thread_1_check_stream.read()
-            thread_2_compressed_data = thread_2_check_stream.read()
-            thread_3_compressed_data = thread_3_check_stream.read()
-
-            thread_1_check_stream.close()
-            thread_2_check_stream.close()
-            thread_3_check_stream.close()
-
-            self.assertEqual(expected_thread_1_compressed_data, thread_1_compressed_data)
-            self.assertEqual(expected_thread_2_compressed_data, thread_2_compressed_data)
-            self.assertEqual(expected_thread_3_compressed_data, thread_3_compressed_data)
-
-        finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
-                initializing_stream.close()
-
-            if not (thread_1_check_stream is None) and not thread_1_check_stream.closed:
-                thread_1_check_stream.close()
-
-            if not (thread_2_check_stream is None) and not thread_2_check_stream.closed:
-                thread_2_check_stream.close()
-
-            if not (thread_3_check_stream is None) and not thread_3_check_stream.closed:
-                thread_3_check_stream.close()
-
-            os.remove(read_stream_path)
-            os.remove(thread_1_result_file)
-            os.remove(thread_2_result_file)
-            os.remove(thread_3_result_file)
-
-    @mock.patch('src.utilities.threading_configuration')
-    @mock.patch('src.utilities.thread_result_file_path')
-    @mock.patch('src.elias._combine_threads_results')
-    @mock.patch('src.utilities.generate_codes')
-    def test_hyper_threaded_compress_wiki_1_thread_results_file_content(self,
-                                                                      mocked_generate_codes,
-                                                                      mocked_combine_threading_results,
-                                                                      mocked_thread_result_file_path,
-                                                                      mocked_threading_configuration):
-        data = "TOBEORNOTTOBEORTOBEORNOT"
-
-        expected_thread_1_compressed_data = b'OTBERN' + self.test_delimiter + b'\x56\x49\x4D\x4A\xC9\x2A\xB2\x4A\x6A'
-        # O : 1
-        # T : 010
-        # B : 011
-        # E : 00100
-        # R : 00101
-        # N : 00110
-        # 010 1 011 00100 1 00101 00110 1 010 010 1 011 00100 1 00101 010 1 011 00100 1 00101 00110 1 010
-        # 01010110 01001001 01001101 01001010 11001001 00101010 10110010 01001010 01101010
-        # 56       49       4D       4A       C9       2A       B2       4A       6A
-
-        num_of_thread = 1
-        thread_chunk = 24
-        mocked_threading_configuration.return_value = (num_of_thread, thread_chunk)
-
-        thread_1_result_file = configuration.test_file_path('hyper_threaded_gamma_wiki_thread_1.txt')
-        mocked_thread_result_file_path.side_effect = [thread_1_result_file]
-
-        codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
-        mocked_generate_codes.return_value = codes
-
-        util.threading_configuration = mocked_threading_configuration
-        elias._combine_threads_results = mocked_combine_threading_results
-        util.thread_result_file_path = mocked_thread_result_file_path
-        util.generate_codes = mocked_generate_codes
-
-        read_stream_path = configuration.test_file_path('hyper_threaded_gamma_wiki.txt')
-        # since _combine_threading_results is mocked this file
-        # is not created and therefore needs not to be deleted
-        write_stream_path = configuration.test_file_path('hyper_threaded_gamma_wiki_compressed.txt')
-
-        initializing_stream = None
-        thread_1_check_stream = None
-
-        try:
-            initializing_stream = open(read_stream_path, 'w')
-            initializing_stream.write(data)
-            initializing_stream.close()
-
-            elias._hyper_threaded_compress(read_stream_path, write_stream_path,
-                                           code_function=elias_code_functions.gamma_code,
-                                           ending_bit=elias.gamma_code_ending_bit)
-
-            thread_1_check_stream = open(thread_1_result_file, 'rb')
-            thread_1_compressed_data = thread_1_check_stream.read()
-            thread_1_check_stream.close()
-
-            self.assertEqual(expected_thread_1_compressed_data, thread_1_compressed_data)
-
-        finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
-                initializing_stream.close()
-
-            if not (thread_1_check_stream is None) and not thread_1_check_stream.closed:
-                thread_1_check_stream.close()
-
-            os.remove(read_stream_path)
-            os.remove(thread_1_result_file)
-
     # ---------------- test _compress_file_content --------------
 
-    def test_compress_file_content_gamma_simple(self):
+    @mock.patch('queue.PriorityQueue')
+    def test_compress_file_content_gamma_simple(self, mocked_priority_queue):
         data = "ABBCCCDDDD"
-        expected_compressed_data = b'DCBA' + self.test_delimiter + b'\x23\x69\x2F'
+        expected_compressed_data = b'DCBA' + self._test_delimiter + b'\x23\x69\x2F'
         # A : 1 : 4 : 00100
         # B : 2 : 3 : 011
         # C : 3 : 2 : 010
@@ -445,38 +258,42 @@ class EliasTest(unittest.TestCase):
         # 23       69       2F
 
         read_stream_path = configuration.test_file_path('simple_gamma.txt')
-        write_stream_path = configuration.test_file_path('\simple_gamma_compressed.txt')
+        write_stream_path = configuration.test_file_path('simple_gamma_compressed.txt')
+
+        results_queue = mocked_priority_queue.return_value
+        thread_number = 1
+        read_stream_start_position = 0
+        read_limit = None
+        threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
 
         initializing_stream = None
         check_stream = None
-
         try:
             initializing_stream = open(read_stream_path, 'w')
             initializing_stream.write(data)
-            initializing_stream.close()
+            initializing_stream.flush()
 
             elias._compress_file_content(read_stream_path, write_stream_path,
-                                         code_function=elias_code_functions.gamma_code,
-                                         ending_bit=elias.gamma_code_ending_bit
-                                         )
+                                         threading_data=threading_data,
+                                         code_function=TestElias._gamma_code_function,
+                                         ending_bit=TestElias._gamma_code_ending_bit)
 
             check_stream = open(write_stream_path, 'rb')
             compressed_data = check_stream.read()
-            check_stream.close()
-
             self.assertEqual(expected_compressed_data, compressed_data)
         finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
+            if not (initializing_stream is None):
                 initializing_stream.close()
-            if not (check_stream is None) and not check_stream.closed:
+            if not (check_stream is None):
                 check_stream.close()
 
             os.remove(read_stream_path)
             os.remove(write_stream_path)
 
-    def test_compress_file_content_delta_simple(self):
+    @mock.patch('queue.PriorityQueue')
+    def test_compress_file_content_delta_simple(self, mocked_priority_queue):
         data = "ABBCCCDDDD"
-        expected_compressed_data = b'DCBA' + self.test_delimiter + b'\x62\xAA\x22\x78'
+        expected_compressed_data = b'DCBA' + self._test_delimiter + b'\x62\xAA\x22\x78'
         # A : 1 : 4 : 01100
         # B : 2 : 3 : 0101
         # C : 3 : 2 : 0100
@@ -487,36 +304,42 @@ class EliasTest(unittest.TestCase):
         read_stream_path = configuration.test_file_path('simple_delta.txt')
         write_stream_path = configuration.test_file_path('simple_delta_compressed.txt')
 
+        results_queue = mocked_priority_queue.return_value
+        thread_number = 1
+        read_stream_start_position = 0
+        read_limit = None
+        threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
+
         initializing_stream = None
         check_stream = None
-
         try:
             initializing_stream = open(read_stream_path, 'w')
             initializing_stream.write(data)
-            initializing_stream.close()
+            initializing_stream.flush()
 
             elias._compress_file_content(read_stream_path, write_stream_path,
-                                         code_function=elias_code_functions.delta_code,
-                                         ending_bit=elias.delta_code_ending_bit
+                                         threading_data=threading_data,
+                                         code_function=TestElias._delta_code_function,
+                                         ending_bit=TestElias._delta_code_ending_bit
                                          )
 
             check_stream = open(write_stream_path, 'rb')
             compressed_data = check_stream.read()
-            check_stream.close()
 
             self.assertEqual(expected_compressed_data, compressed_data)
         finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
+            if not (initializing_stream is None):
                 initializing_stream.close()
-            if not (check_stream is None) and not check_stream.closed:
+            if not (check_stream is None):
                 check_stream.close()
 
             os.remove(read_stream_path)
             os.remove(write_stream_path)
 
-    def test_compress_simple_omega_hype_threaded_file_content(self):
+    @mock.patch('queue.PriorityQueue')
+    def test_compress_simple_omega_file_content(self, mocked_priority_queue):
         data = "ABBCCCDDDD"
-        expected_compressed_data = b'DCBA' + self.test_delimiter + b'\xA3\x69\x20\x7F'
+        expected_compressed_data = b'DCBA' + self._test_delimiter + b'\xA3\x69\x20\x7F'
         # A : 1 : 4 : 101000
         # B : 2 : 3 : 110
         # C : 3 : 2 : 100
@@ -529,18 +352,23 @@ class EliasTest(unittest.TestCase):
         read_stream_path = configuration.test_file_path('simple_omega.txt')
         write_stream_path = configuration.test_file_path('simple_omega_compressed.txt')
 
+        results_queue = mocked_priority_queue.return_value
+        thread_number = 1
+        read_stream_start_position = 0
+        read_limit = None
+        threading_data = (results_queue, thread_number, read_stream_start_position, read_limit)
+
         initializing_stream = None
         check_stream = None
-
         try:
             initializing_stream = open(read_stream_path, 'w')
             initializing_stream.write(data)
-            initializing_stream.close()
+            initializing_stream.flush()
 
             elias._compress_file_content(read_stream_path, write_stream_path,
-                                         code_function=elias_code_functions.omega_code,
-                                         ending_bit=elias.omega_code_ending_bit
-                                         )
+                                         threading_data=threading_data,
+                                         code_function=TestElias._omega_code_function,
+                                         ending_bit=TestElias._omega_code_ending_bit)
 
             check_stream = open(write_stream_path, 'rb')
             compressed_data = check_stream.read()
@@ -548,10 +376,10 @@ class EliasTest(unittest.TestCase):
 
             self.assertEqual(expected_compressed_data, compressed_data)
         finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
+            if not (initializing_stream is None):
                 initializing_stream.close()
 
-            if not (check_stream is None) and not check_stream.closed:
+            if not (check_stream is None):
                 check_stream.close()
 
             os.remove(read_stream_path)
@@ -624,22 +452,28 @@ class EliasTest(unittest.TestCase):
 
     # ------ test simple example decompress file content ---
 
-    def test_decompress_file_content_gamma_simple(self):
-        binary_data = b'DCBA' + self.test_delimiter + b'\x23\x69\x2F'
+    @mock.patch('util.chunk_file')
+    def test_decompress_1_chunk(self, mocked_chunk_file):
+        binary_data = b'DCBA' + self._test_delimiter + b'\x23\x69\x2F'
         expected_decompressed_data = "ABBCCCDDDD"
-
-        initializing_stream = None
-        check_stream = None
 
         read_stream_path = configuration.test_file_path('simple_compressed_gamma.txt')
         write_file_path = configuration.test_file_path('simple_decompressed_gamma.txt')
+        code_type = 'gamma'
 
+        num_of_chunks = 1
+        chunk_size = 0
+
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
+
+        initializing_stream = None
+        check_stream = None
         try:
             initializing_stream = open(read_stream_path, 'wb')
             initializing_stream.write(binary_data)
             initializing_stream.close()
 
-            elias.decompress(read_stream_path, write_file_path, code_type='gamma')
+            elias.decompress(read_stream_path, write_file_path, code_type=code_type)
 
             check_stream = open(write_file_path, 'r')
             decompressed_data = check_stream.read()
@@ -655,24 +489,30 @@ class EliasTest(unittest.TestCase):
             os.remove(read_stream_path)
             os.remove(write_file_path)
 
-    def test_decompress_file_content_delta_simple(self):
-        binary_data = b'DCBA' + self.test_delimiter + b'\x62\xAA\x22\x78'
+    @mock.patch('util.chunk_file')
+    def test_decompress_3_chunks(self, mocked_chunk_file):
+        binary_data = b'DCBA' + self._test_delimiter + b'\x23\x69\x2F'
         expected_decompressed_data = "ABBCCCDDDD"
 
-        read_stream_path = configuration.test_file_path('simple_compressed_delta.txt')
-        write_stream_path = configuration.test_file_path('simple_decompressed_delta.txt')
+        read_stream_path = configuration.test_file_path('simple_compressed_gamma.txt')
+        write_file_path = configuration.test_file_path('simple_decompressed_gamma.txt')
+        code_type = 'gamma'
+
+        num_of_chunks = 3
+        chunk_size = 1
+
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
 
         initializing_stream = None
         check_stream = None
-
         try:
             initializing_stream = open(read_stream_path, 'wb')
             initializing_stream.write(binary_data)
             initializing_stream.close()
 
-            elias.decompress(read_stream_path, write_stream_path, code_type='delta')
+            elias.decompress(read_stream_path, write_file_path, code_type=code_type)
 
-            check_stream = open(write_stream_path, 'r')
+            check_stream = open(write_file_path, 'r')
             decompressed_data = check_stream.read()
             check_stream.close()
 
@@ -684,103 +524,164 @@ class EliasTest(unittest.TestCase):
                 check_stream.close()
 
             os.remove(read_stream_path)
-            os.remove(write_stream_path)
-
-    def test_decompress_file_content_omega_simple(self):
-        binary_data = b'DCBA' + self.test_delimiter + b'\xA3\x69\x20\x7F'
-        expected_decompressed_data = "ABBCCCDDDD"
-
-        read_stream_path = configuration.test_file_path('simple_compressed_omega.txt')
-        write_stream_path = configuration.test_file_path('simple_decompressed_omega.txt')
-
-        initializing_stream = None
-        check_stream = None
-
-        try:
-            initializing_stream = open(read_stream_path, 'wb')
-            initializing_stream.write(binary_data)
-            initializing_stream.close()
-
-            elias.decompress(read_stream_path, write_stream_path, code_type='omega')
-
-            check_stream = open(write_stream_path, 'r')
-            decompressed_data = check_stream.read()
-            check_stream.close()
-
-            self.assertEqual(expected_decompressed_data, decompressed_data)
-        finally:
-            if not (initializing_stream is None) and not initializing_stream.closed:
-                initializing_stream.close()
-            if not (check_stream is None) and not check_stream.closed:
-                check_stream.close()
-
-            os.remove(read_stream_path)
-            os.remove(write_stream_path)
+            os.remove(write_file_path)
 
     # ------ test simple example _decompress_data ---
 
     def test_decompress_data_gamma_simple(self):
         bits = '001000110110100100101111'
         reversed_codes = {'1': 'D', '010': 'C', '011': 'B', '00100': 'A'}
-        expected_decompressed_data = "ABBCCCDDDD"
+        compression_end = True
+        expected_decompress_result = ('ABBCCCDDDD', '')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_gamma_code,
-                                              ending_bit=elias.gamma_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_gamma_code,
+                                                   ending_bit=TestElias._gamma_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
     def test_decompress_data_delta_simple(self):
         bits = '01100010101010100010001001111'
         reversed_codes = {'1': 'D', '0100': 'C', '0101': 'B', '01100': 'A'}
-        expected_decompressed_data = "ABBCCCDDDD"
+        compression_end = True
+        expected_decompress_result = ('ABBCCCDDDD', '')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_delta_code,
-                                              ending_bit=elias.delta_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_delta_code,
+                                                   ending_bit=TestElias._delta_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
     def test_decompress_data_omega_simple(self):
         bits = '1010001101101001001000000111111'
         reversed_codes = {'0': 'D', '100': 'C', '110': 'B', '101000': 'A'}
-        expected_decompressed_data = "ABBCCCDDDD"
+        compression_end = True
+        expected_decompress_result = ('ABBCCCDDDD', '111111')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_omega_code,
-                                              ending_bit=elias.omega_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_omega_code,
+                                                   ending_bit=TestElias._omega_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
     # ------ test wiki example _decompress_data ---
 
     def test_decompress_data_gamma_wiki(self):
         bits = '010101100100100101001101010010101100100100101010101100100100101001101010'
         reversed_codes = {'1': 'O', '010': 'T', '011': 'B', '00100': 'E', '00101': 'R', '00110': 'N'}
-        expected_decompressed_data = 'TOBEORNOTTOBEORTOBEORNOT'
+        compression_end = True
+        expected_decompress_result = ('TOBEORNOTTOBEORTOBEORNOT', '')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_gamma_code,
-                                              ending_bit=elias.gamma_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_gamma_code,
+                                                   ending_bit=TestElias._gamma_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
     def test_decompress_data_delta_wiki(self):
         bits = '01001010101100101101011101010001001010101100101101010010101011001011010111010100'
         reversed_codes = {'1': 'O', '0100': 'T', '0101': 'B', '01100': 'E', '01101': 'R', '01110': 'N'}
-        expected_decompressed_data = 'TOBEORNOTTOBEORTOBEORNOT'
+        compression_end = True
+        expected_decompress_result = ('TOBEORNOTTOBEORTOBEORNOT', '')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_delta_code,
-                                              ending_bit=elias.delta_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_delta_code,
+                                                   ending_bit=TestElias._delta_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
     def test_decompress_data_omega_wiki(self):
         bits = '10001101010000101010101100010010001101010000101010100011010100001010101011000100'
         reversed_codes = {'0': 'O', '100': 'T', '110': 'B', '101000': 'E', '101010': 'R', '101100': 'N'}
-        expected_decompressed_data = 'TOBEORNOTTOBEORTOBEORNOT'
+        compression_end = True
+        expected_decompress_result = ('TOBEORNOTTOBEORTOBEORNOT', '')
 
-        decompressed_data = elias._decompress_data(bits, reversed_codes, read_code_function=elias._read_omega_code,
-                                              ending_bit=elias.omega_code_ending_bit)
+        decompressed_data = elias._decompress_data(bits, reversed_codes,
+                                                   read_code_function=TestElias._read_omega_code,
+                                                   ending_bit=TestElias._omega_code_ending_bit,
+                                                   compression_end=compression_end)
 
-        self.assertEqual(expected_decompressed_data, decompressed_data)
+        self.assertEqual(expected_decompress_result, decompressed_data)
 
+
+class TestEliasFunction(unittest.TestCase):
+
+    def test_gamma_code_incorrect_number(self):
+        self.assertRaises(ValueError, elias._gamma_code, 0)
+        self.assertRaises(ValueError, elias._gamma_code, -1)
+
+    def test_delta_code_incorrect_number(self):
+        self.assertRaises(ValueError, elias._delta_code, 0)
+        self.assertRaises(ValueError, elias._delta_code, -1)
+
+    def test_omega_code_incorrect_number(self):
+        self.assertRaises(ValueError, elias._omega_code, 0)
+        self.assertRaises(ValueError, elias._omega_code, -1)
+
+    def test_gamma_code(self):
+        self.assertEqual('1', elias._gamma_code(1))
+        self.assertEqual('010', elias._gamma_code(2))
+        self.assertEqual('011', elias._gamma_code(3), )
+        self.assertEqual('00100', elias._gamma_code(4))
+        self.assertEqual('00101', elias._gamma_code(5))
+        self.assertEqual('00110', elias._gamma_code(6))
+        self.assertEqual('00111', elias._gamma_code(7))
+        self.assertEqual('0001000', elias._gamma_code(8))
+        self.assertEqual('0001001', elias._gamma_code(9))
+        self.assertEqual('0001010', elias._gamma_code(10))
+        self.assertEqual('0001011', elias._gamma_code(11))
+        self.assertEqual('0001100', elias._gamma_code(12))
+        self.assertEqual('0001101', elias._gamma_code(13))
+        self.assertEqual('0001110', elias._gamma_code(14))
+        self.assertEqual('0001111', elias._gamma_code(15))
+        self.assertEqual('000010000', elias._gamma_code(16))
+        self.assertEqual('000010001', elias._gamma_code(17))
+
+    def test_delta_code(self):
+        self.assertEqual('1', elias._delta_code(1))
+        self.assertEqual('0100', elias._delta_code(2))
+        self.assertEqual('0101', elias._delta_code(3))
+        self.assertEqual('01100', elias._delta_code(4))
+        self.assertEqual('01101', elias._delta_code(5))
+        self.assertEqual('01110', elias._delta_code(6))
+        self.assertEqual('01111', elias._delta_code(7))
+        self.assertEqual('00100000', elias._delta_code(8))
+        self.assertEqual('00100001', elias._delta_code(9))
+        self.assertEqual('00100010', elias._delta_code(10))
+        self.assertEqual('00100011', elias._delta_code(11))
+        self.assertEqual('00100100', elias._delta_code(12))
+        self.assertEqual('00100101', elias._delta_code(13))
+        self.assertEqual('00100110', elias._delta_code(14))
+        self.assertEqual('00100111', elias._delta_code(15))
+        self.assertEqual('001010000', elias._delta_code(16))
+        self.assertEqual('001010001', elias._delta_code(17))
+
+    def test_omega_code(self):
+        self.assertEqual('0', elias._omega_code(1))
+        self.assertEqual('100', elias._omega_code(2))
+        self.assertEqual('110', elias._omega_code(3))
+        self.assertEqual('101000', elias._omega_code(4))
+        self.assertEqual('101010', elias._omega_code(5))
+        self.assertEqual('101100', elias._omega_code(6))
+        self.assertEqual('101110', elias._omega_code(7))
+        self.assertEqual('1110000', elias._omega_code(8))
+        self.assertEqual('1110010', elias._omega_code(9))
+        self.assertEqual('1110100', elias._omega_code(10))
+        self.assertEqual('1110110', elias._omega_code(11))
+        self.assertEqual('1111000', elias._omega_code(12))
+        self.assertEqual('1111010', elias._omega_code(13))
+        self.assertEqual('1111100', elias._omega_code(14))
+        self.assertEqual('1111110', elias._omega_code(15))
+        self.assertEqual('10100100000', elias._omega_code(16))
+        self.assertEqual('10100100010', elias._omega_code(17))
+
+
+class TestReadCode(unittest.TestCase):
     # ------ test _read_gamma_code --------
 
     def test_read_gamma_code_correct_code(self):

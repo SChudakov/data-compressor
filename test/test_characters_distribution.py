@@ -12,13 +12,13 @@ class TestCharactersDistribution(unittest.TestCase):
 
     # --------------   test count_characters_distribution   -----------------------
 
-    @mock.patch('utilities.threading_configuration')
-    @mock.patch('utilities.thread_result_file_path')
+    @mock.patch('util.chunk_file')
+    @mock.patch('util.thread_result_file_path')
     @mock.patch('src.characters_distribution._shuffle_mapper_results')
     def test_map_reduce_count_thread_results_file_content(self,
-                                                          mocked__shuffle_mapper_results,
+                                                          mocked_shuffle_mapper_results,
                                                           mocked_thread_result_file_path,
-                                                          mocked_threading_configuration):
+                                                          mocked_chunk_file):
         data = "AAAABBBBCCCC"
 
         expected_thread_1_compressed_data = 'A 1\nA 1\nA 1\nA 1'
@@ -31,14 +31,14 @@ class TestCharactersDistribution(unittest.TestCase):
 
         shuffled_mapper_results = dict()
 
-        num_of_threads = 3
-        thread_chunk = 4
+        num_of_chunks = 3
+        chunk_size = 4
 
-        mocked__shuffle_mapper_results.return_value = shuffled_mapper_results
+        mocked_shuffle_mapper_results.return_value = shuffled_mapper_results
         mocked_thread_result_file_path.side_effect = [thread_1_result_file,
                                                       thread_2_result_file,
                                                       thread_3_result_file]
-        mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
 
         read_stream_path = configuration.test_file_path('count_characters_distribution.txt')
 
@@ -88,15 +88,15 @@ class TestCharactersDistribution(unittest.TestCase):
             os.remove(thread_3_result_file)
             os.remove(thread_2_result_file)
 
-    @mock.patch('utilities.threading_configuration')
-    def test_map_reduce_count_result(self, mocked_threading_configuration):
+    @mock.patch('util.chunk_file')
+    def test_map_reduce_count_result(self, mocked_chunk_file):
         data = "ABCABCABCABC"
         expected_characters_distributions = {('B', 4), ('C', 4), ('A', 4)}
 
-        num_of_threads = 3
-        thread_chunk = 4
+        num_of_chunks = 3
+        chunk_size = 4
 
-        mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
 
         read_file_path = configuration.test_file_path('test_count_characters_distribution_result')
 
@@ -180,15 +180,15 @@ class TestCharactersDistribution(unittest.TestCase):
 
     # ---------------- test high_performance_count -----------------
 
-    @mock.patch('utilities.threading_configuration')
-    def test_count_characters_distribution_result(self, mocked_threading_configuration):
+    @mock.patch('util.chunk_file')
+    def test_count_characters_distribution_result(self, mocked_chunk_file):
         data = "ABCABCABCABC"
         expected_characters_distributions = {'B': 4, 'C': 4, 'A': 4}
 
-        num_of_threads = 3
-        thread_chunk = 4
+        num_of_chunks = 3
+        chunk_size = 4
 
-        mocked_threading_configuration.return_value = (num_of_threads, thread_chunk)
+        mocked_chunk_file.return_value = (num_of_chunks, chunk_size)
 
         read_file_path = configuration.test_file_path('test_count_characters_distribution_result')
 

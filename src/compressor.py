@@ -1,8 +1,8 @@
 """Compressor.
 
 Usage:
-  compressor.py compress <read_file> [-o <write_file>] [--lzw|--elias [--divergence <divergence>|--code <code>] [--hp]]
-  compressor.py decompress <read_file> [-o <write_file>] (--lzw|--elias --code <code> [--hp])
+  compressor.py compress <read_file> [-o <write_file>] [--lzw|--elias [--divergence <divergence>|--code <code>]]
+  compressor.py decompress <read_file> [-o <write_file>] (--lzw|--elias --code <code>)
 
 Options:
   --help                         Show this screen.

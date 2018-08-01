@@ -1,14 +1,14 @@
 import unittest
 
-from src import elias_code_functions, util
+import elias
+import util
 
 
 class TestUtil(unittest.TestCase):
 
-
     def test_wiki_binary_string(self):
         compressed_data = '101000111100010001010111110010001110001111010100' \
-                       '011011011101011111100100011110100000100010000000'
+                          '011011011101011111100100011110100000100010000000'
         expected_binary_data = b'\xa3\xc4W\xc8\xe3\xd4m\xd7\xe4z\x08\x80'
         # lzw_code = '10100 01111 00010 00101 01111 10010 ' \
         #            '001110 001111 010100 011011 011101 011111 100100 011110 100000 100010 000000'
@@ -65,7 +65,7 @@ class TestUtil(unittest.TestCase):
         characters_by_frequency = 'DCBA'
         expected_codes = {'D': '1', 'C': '010', 'B': '011', 'A': '00100'}
 
-        codes = util.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
+        codes = util.generate_codes(characters_by_frequency, elias._gamma_code)
 
         self.assertEqual(expected_codes, codes)
 
@@ -73,7 +73,7 @@ class TestUtil(unittest.TestCase):
         characters_by_frequency = 'OTBERN'
         expected_codes = {'O': '1', 'T': '010', 'B': '011', 'E': '00100', 'R': '00101', 'N': '00110'}
 
-        codes = util.generate_codes(characters_by_frequency, elias_code_functions.gamma_code)
+        codes = util.generate_codes(characters_by_frequency, elias._gamma_code)
 
         self.assertEqual(expected_codes, codes)
 

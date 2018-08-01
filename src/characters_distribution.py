@@ -4,13 +4,13 @@ import os
 import queue
 import threading
 
-import elias_code_functions
+import elias
 import file_access_modes
 import kullback_leiber
 import util
 
 
-def code_type(file_path,*, distribution_divergence):
+def code_type(file_path, *, distribution_divergence):
     characters_frequencies = _high_performance_count(file_path)
     characters_frequencies = [item[1] for item in characters_frequencies.items()]
     characters_sum = sum(characters_frequencies)
@@ -121,26 +121,26 @@ def _generate_omega_code_distribution(num_of_chars):
             group_begin *= 2
             group_end *= 2
 
-            code_length = len(str(elias_code_functions.omega_code(group_begin)))
+            code_length = len(str(elias._omega_code(group_begin)))
         else:
             break
     return result
 
 
 def _map_reduce_count(read_stream_path):
-    num_of_threads, thread_chunk = util.threading_configuration(read_stream_path)
+    num_of_chunks, chunk_size = util.chunk_file(read_stream_path)
 
     mapper_threads = list()
     mapper_result_files = list()
-    for thread_number in range(1, num_of_threads + 1):
+    for thread_number in range(1, num_of_chunks + 1):
 
-        read_stream_start_position = thread_chunk * (thread_number - 1)
+        read_stream_start_position = chunk_size * (thread_number - 1)
         thread_result_file_path = util.thread_result_file_path(read_stream_path, thread_number, task_mark='distr')
 
-        if thread_number == num_of_threads:
+        if thread_number == num_of_chunks:
             read_limit = None
         else:
-            read_limit = thread_chunk
+            read_limit = chunk_size
 
         thread = threading.Thread(target=_mapper,
                                   args=(
@@ -234,34 +234,32 @@ def _reducer(character_values_tuple, reduced_results):
 
 
 def _high_performance_count(read_stream_path):
-    num_of_threads, thread_chunk = util.threading_configuration(read_stream_path)
+    num_of_chunks, chunk_size = util.chunk_file(read_stream_path)
 
     threads = list()
     threads_result_dicts = queue.Queue()
-    for thread_number in range(1, num_of_threads + 1):
+    for thread_number in range(1, num_of_chunks + 1):
 
-        read_stream_start_position = thread_chunk * (thread_number - 1)
+        read_stream_start_position = chunk_size * (thread_number - 1)
 
-        if thread_number == num_of_threads:
+        if thread_number == num_of_chunks:
             read_limit = None
         else:
-            read_limit = thread_chunk
+            read_limit = chunk_size
 
         thread = threading.Thread(target=_high_performance_characters_frequencies_count,
                                   args=(read_stream_path,
                                         read_stream_start_position,
                                         read_limit,
-                                        threads_result_dicts,
-                                        thread_number)
+                                        threads_result_dicts)
                                   )
         thread.start()
         threads.append(thread)
 
-    return _combine_dictionaries(threads_result_dicts, num_of_threads)
+    return _combine_dictionaries(threads_result_dicts, num_of_chunks)
 
 
-def _high_performance_characters_frequencies_count(read_stream_path, read_start_position, read_limit, results_queue,
-                                                   thread_number):
+def _high_performance_characters_frequencies_count(read_stream_path, read_start_position, read_limit, results_queue):
     read_stream = None
 
     try:

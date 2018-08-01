@@ -1,5 +1,6 @@
-from time_measure import measure_time
+import collections
 
+import elias
 import lzw
 
 
@@ -28,4 +29,4 @@ def compress_decompress():
 
 
 if __name__ == "__main__":
-    measure_time(compress_decompress)
+    print(elias._read_omega_code('1011000100', 0))
