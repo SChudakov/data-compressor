@@ -1,4 +1,5 @@
 import collections
+import math
 
 import elias
 import lzw
@@ -29,4 +30,4 @@ def compress_decompress():
 
 
 if __name__ == "__main__":
-    print(elias._read_omega_code('1011000100', 0))
+    print(math.ceil(1.124134))

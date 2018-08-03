@@ -51,7 +51,7 @@ def _compress_data(data, dictionary, *, initial_phrase, compression_end):
     for ch in data:
         phrase += ch
         if not (phrase in dictionary.keys()):
-            result.append(util.extend_to_length(dictionary[phrase[:-1]], code_length))
+            result.append(util.extend_to_length(dictionary[phrase[:-1]], code_length, ending_bit=_zero_bit))
             # print('stream', phrase[:-1], ':', utilities.extend_to_length(dictionary[phrase[:-1]], code_length))
             # print('phrase:', phrase)
 
@@ -65,7 +65,7 @@ def _compress_data(data, dictionary, *, initial_phrase, compression_end):
             phrase = phrase[-1]
 
     if compression_end:
-        result.append(util.extend_to_length(dictionary[phrase], code_length))
+        result.append(util.extend_to_length(dictionary[phrase], code_length, ending_bit=_zero_bit))
 
     return _empty_str.join(result), phrase
 
