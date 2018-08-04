@@ -82,7 +82,7 @@ def _validate_read_file_path(file_path):
     try:
         read_stream = open(file_path, **file_access_modes.default_read_configuration)
     finally:
-        if not(read_stream is None):
+        if not (read_stream is None):
             read_stream.close()
 
 
@@ -91,9 +91,10 @@ def _validate_write_file_path(file_path):
     try:
         write_stream = open(file_path, **file_access_modes.default_write_configuration)
     finally:
-        if not(write_stream is None):
+        if not (write_stream is None):
             write_stream.close()
         os.remove(file_path)
+
 
 def _enrich_arguments(arguments):
     compress_value = arguments[_compress_command]
@@ -125,18 +126,20 @@ def _enrich_arguments(arguments):
         lzw_value = True
         lzw_value_changed = True
     elif elias_value:
-        default_divergence_case = False
-        if (divergence_value is None) and (code_value is None):
-            divergence_value = _default_divergence_exceed_error
-            default_divergence_case = True
+        if code_value is None:
+            default_divergence_case = False
+            if divergence_value is None:
+                divergence_value = _default_divergence
+                default_divergence_case = True
+            else:
+                divergence_value = float(divergence_value)
 
-        if not (divergence_value is None):
-            divergence_value = float(divergence_value)
             divergence_value_changed = True
 
-        if code_value is None:
             code_value = characters_distribution.code_type(read_file_value, distribution_divergence=divergence_value)
+
             _ensure_correct_code_value(code_value, read_file_value, divergence_value, default_divergence_case)
+
             code_value_changed = True
 
     if write_file_value_changed:

@@ -371,7 +371,7 @@ class TestExecutionElias(unittest.TestCase):
 
         self.assertFalse(mocked_lzw_compress.called)
         self.assertFalse(mocked_lzw_decompress.called)
-        mocked_elias_compress.assert_called_with(_read_file_path, _write_file_path,code_type=code_type)
+        mocked_elias_compress.assert_called_with(_read_file_path, _write_file_path, code_type=code_type)
         self.assertFalse(mocked_elias_decompress.called)
 
     def test_execute_compress_write_file_elias_code(self,
@@ -504,7 +504,7 @@ class TestExecutionElias(unittest.TestCase):
         self.assertFalse(mocked_lzw_compress.called)
         self.assertFalse(mocked_lzw_decompress.called)
         self.assertFalse(mocked_elias_compress.called)
-        mocked_elias_decompress.assert_called_with(_read_file_path, _write_file_path,code_type=code_type)
+        mocked_elias_decompress.assert_called_with(_read_file_path, _write_file_path, code_type=code_type)
 
 
 class TestExecutionWrongParameters(unittest.TestCase):
@@ -523,8 +523,30 @@ class TestExecutionWrongParameters(unittest.TestCase):
 
         self.assertRaises(Exception, execution.execute, arguments)
 
-    def test_execute_default_divergence_exceeded(self):
-        pass
+    @mock.patch('execution._validate_read_file_path', mock.Mock())
+    @mock.patch('characters_distribution.code_type')
+    def test_execute_compress_default_divergence_exceeded(self, mocked_code_type):
+        arguments = _get_arguments_dict(True, False, _read_file_path, None,
+                                        False, True, None, None)
+        code_type = None
+        mocked_code_type.return_value = code_type
 
-    def test_execute_specified_divergence_exceeded(self):
-        pass
+        self.assertRaises(ValueError, execution.execute, arguments)
+        mocked_code_type.assert_called_once_with(_read_file_path,
+                                                 distribution_divergence=_default_divergence)
+
+    @mock.patch('execution._validate_read_file_path', mock.Mock())
+    @mock.patch('characters_distribution.code_type')
+    def test_execute_specified_divergence_exceeded(self, mocked_code_type):
+
+        divergence_str = _specified_divergence_str
+        divergence = _specified_divergence
+        arguments = _get_arguments_dict(True, False, _read_file_path, None,
+                                        False, True, divergence_str, None)
+
+        characters_distribution_code_type = None
+        mocked_code_type.return_value = characters_distribution_code_type
+
+        self.assertRaises(ValueError, execution.execute, arguments)
+        mocked_code_type.assert_called_once_with(_read_file_path,
+                                                 distribution_divergence=divergence)
